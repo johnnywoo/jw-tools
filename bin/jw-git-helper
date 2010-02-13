@@ -18,7 +18,7 @@ Information:
   dl      Show diff for last commit in the branch.
   help    An instruction on using this tool.
 Committing:
-  a       git add .
+  a       git add
   m       git commit
   am      Commit all local changes.
   revert  git checkout --
@@ -93,7 +93,7 @@ Working with repositories as a lead programmer:
 
  6. If you want to accept the branch into master, simply type:
 
-      gh accept
+       gh accept
 
     This will merge the branch into master, remove the branch from both local and remote
     servers, and close the ticket as fixed (you will be asked for confirmation).
@@ -101,55 +101,49 @@ Working with repositories as a lead programmer:
 EOF
 }
 
-current_branch()
-{
-	git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+# exits with an error message
+crap() { # error message
+	[ "$1" ] && echo "$1" >&2
+	exit 1
 }
 
-guess_ticket()
-{
-	branch="$1"
-	[ -z "$branch" ] && branch=$(current_branch)
-	ticket=$(echo "$branch" | cut -d _ -f 2)
-	[[ "$ticket" =~ ^[0-9]+$ ]] || ticket=""
-	echo "$ticket"
+current_branch() {
+	git branch --no-color 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
 
-guess_author()
-{
+# cuts first numeric sequence from the input
+guess_ticket() { # ticket id or branch name
+	echo "$1" | egrep -o '[[:digit:]]{5}' | head -n 1
+}
+
+guess_author() { # [branch name]
 	branch="$1"
 	[ -z "$branch" ] && branch=$(current_branch)
 	echo "$branch" | cut -d _ -f 1
 }
 
-current_ticket()
-{
-	ticket="$1"
-	# if no ticket specified, try to cut ID out of current branch name
-	[ -z "$ticket" ] && ticket=$(guess_ticket)
-	[[ "$ticket" =~ ^[0-9]+$ ]] || crap "Need ticket number"
+# Takes input and converts it into ticket id.
+# Grabs current branch name if no/empty args given.
+# The script will die if no ticket id is found!
+current_ticket() { # [ticket id or branch name]
+	str="$1"
+	[ -z "$str" ] && str=$(current_branch)
+	ticket=$(guess_ticket "$str")
+	[ -z "$ticket" ] && crap "Need ticket number"
 	echo "$ticket"
 }
 
-crap()
-{
-	[ "$1" ] && echo "$1" >&2
-	exit 1
-}
-
-current_project()
-{
+current_project() { # no args
 	x=`pwd`
 	while [ "$x" != "/" ]
 	do
-		[ -d "$x/.git" ] && echo `basename $x` && return
+		[ -d "$x/.git" ] && echo `basename $x` && return 0
 		x=`dirname "$x"`
 	done
 	crap "Not in a git repository"
 }
 
-propose_push()
-{
+propose_push() { # branch name
 	if [ "$1" ] && $JW_CONFIRM_CMD -n "Do you want to push $1 to origin?"
 	then
 		git push origin "$1"
@@ -173,7 +167,7 @@ case "$cmd" in
 		git remote show origin
 		;;
 	l)
-		git remote update > /dev/null
+		git remote update >/dev/null
 		git branch -a
 		;;
 	i)
