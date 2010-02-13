@@ -3,9 +3,8 @@
 # exit on first error
 set -e
 
-trac_cmd="ssh www@ibm.loc /home/www/trac"
-rw_cmd="jw-code-reviewer"
-confirm_cmd="jw-confirm"
+# loading variables with settings
+source jw-settings
 
 usage()
 {
@@ -151,7 +150,7 @@ current_project()
 
 propose_push()
 {
-	if [ "$1" ] && $confirm_cmd -n "Do you want to push $1 to origin?"
+	if [ "$1" ] && $JW_CONFIRM_CMD -n "Do you want to push $1 to origin?"
 	then
 		git push origin "$1"
 	fi
@@ -256,7 +255,7 @@ case "$cmd" in
 		echo
 		echo "== Current branch is $branch"
 		[ "$branch" == "master" ] && crap
-		$confirm_cmd "Do you wish to merge this branch into master and then delete the branch?" || exit 0
+		$JW_CONFIRM_CMD "Do you wish to merge this branch into master and then delete the branch?" || exit 0
 		echo
 		echo "== Switching to master"
 		git checkout master
@@ -276,20 +275,21 @@ case "$cmd" in
 			git push origin :$branch
 		fi
 		ticket=$(guess_ticket "$branch")
-		if [ "$ticket" ]
+		if [ "$ticket" ] && [ "$JW_TRAC_CMD" ]
 		then
-			ticket_info=$($trac_cmd view "$ticket" | head -n 2)
+			ticket_info=$($JW_TRAC_CMD view "$ticket" | head -n 2)
 			if echo "$ticket_info" | head -n 1 | grep -v closed >/dev/null
 			then
 				echo
 				echo "== Trac ticket"
 				echo "$ticket_info"
-				$confirm_cmd "Do you want to close this ticket now?" && echo " " | $trac_cmd save "$ticket" status:closed resolution:fixed
+				$JW_CONFIRM_CMD "Do you want to close this ticket now?" && echo " " | $JW_TRAC_CMD save "$ticket" status:closed resolution:fixed
 			fi
 		fi
 		;;
 
 	t)
+		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
 		ticket=$(current_ticket "$1")
 		$trac_cmd view "$ticket"
 		;;
@@ -314,7 +314,7 @@ case "$cmd" in
 			then
 				# touching branch code review
 				echo
-				$confirm_cmd "Do you want to mark review complete for $project/$branch?" && $rw_cmd set $project/$branch
+				$JW_CONFIRM_CMD "Do you want to mark review complete for $project/$branch?" && $JW_RW_CMD set $project/$branch
 
 				# reverting ticket back to its owner
 				author=$(guess_author "$branch")
@@ -322,7 +322,7 @@ case "$cmd" in
 				then
 					echo
 					$trac_cmd view "$ticket" | head -n 2
-					if $confirm_cmd "Do you want to assign this ticket to $author?"
+					if $JW_CONFIRM_CMD "Do you want to assign this ticket to $author?"
 					then
 						echo "About to save ticket $ticket"
 						echo " " | $trac_cmd save "$ticket" owner:$author
@@ -340,19 +340,19 @@ case "$cmd" in
 	rw)
 		branch=$(current_branch)
 		project=$(current_project)
-		$rw_cmd set $project/$branch "$1"
+		$JW_RW_CMD set $project/$branch "$1"
 		;;
 	ta)
 		ticket=$(current_ticket "$1")
 		author=$(guess_author)
 		$trac_cmd view "$ticket" | head -n 2
-		$confirm_cmd "Do you want to assign this ticket to $author?" || exit
+		$JW_CONFIRM_CMD "Do you want to assign this ticket to $author?" || exit
 		echo "About to save ticket $ticket"
 		echo " " | $trac_cmd save "$ticket" owner:$author
 		;;
 	*)
 		echo "Unrecognized command: $cmd" >&2
-		$confirm_cmd "Do you want to run that with git?" || exit 0
+		$JW_CONFIRM_CMD "Do you want to run that with git?" || exit 0
 		git "$cmd" "$@"
 		;;
 esac
