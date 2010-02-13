@@ -4,7 +4,8 @@
 set -e
 
 trac_cmd="ssh www@ibm.loc /home/www/trac"
-rw_cmd="rw"
+rw_cmd="jw-code-reviewer"
+confirm_cmd="jw-confirm"
 
 usage()
 {
@@ -150,7 +151,7 @@ current_project()
 
 propose_push()
 {
-	if [ "$1" ] && confirm -n "Do you want to push $1 to origin?"
+	if [ "$1" ] && $confirm_cmd -n "Do you want to push $1 to origin?"
 	then
 		git push origin "$1"
 	fi
@@ -255,7 +256,7 @@ case "$cmd" in
 		echo
 		echo "== Current branch is $branch"
 		[ "$branch" == "master" ] && crap
-		confirm "Do you wish to merge this branch into master and then delete the branch?" || exit 0
+		$confirm_cmd "Do you wish to merge this branch into master and then delete the branch?" || exit 0
 		echo
 		echo "== Switching to master"
 		git checkout master
@@ -283,7 +284,7 @@ case "$cmd" in
 				echo
 				echo "== Trac ticket"
 				echo "$ticket_info"
-				confirm "Do you want to close this ticket now?" && echo " " | $trac_cmd save "$ticket" status:closed resolution:fixed
+				$confirm_cmd "Do you want to close this ticket now?" && echo " " | $trac_cmd save "$ticket" status:closed resolution:fixed
 			fi
 		fi
 		;;
@@ -313,7 +314,7 @@ case "$cmd" in
 			then
 				# touching branch code review
 				echo
-				confirm "Do you want to mark review complete for $project/$branch?" && $rw_cmd set $project/$branch
+				$confirm_cmd "Do you want to mark review complete for $project/$branch?" && $rw_cmd set $project/$branch
 
 				# reverting ticket back to its owner
 				author=$(guess_author "$branch")
@@ -321,7 +322,7 @@ case "$cmd" in
 				then
 					echo
 					$trac_cmd view "$ticket" | head -n 2
-					if confirm "Do you want to assign this ticket to $author?"
+					if $confirm_cmd "Do you want to assign this ticket to $author?"
 					then
 						echo "About to save ticket $ticket"
 						echo " " | $trac_cmd save "$ticket" owner:$author
@@ -345,13 +346,13 @@ case "$cmd" in
 		ticket=$(current_ticket "$1")
 		author=$(guess_author)
 		$trac_cmd view "$ticket" | head -n 2
-		confirm "Do you want to assign this ticket to $author?" || exit
+		$confirm_cmd "Do you want to assign this ticket to $author?" || exit
 		echo "About to save ticket $ticket"
 		echo " " | $trac_cmd save "$ticket" owner:$author
 		;;
 	*)
 		echo "Unrecognized command: $cmd" >&2
-		confirm "Do you want to run that with git?" || exit 0
+		$confirm_cmd "Do you want to run that with git?" || exit 0
 		git "$cmd" "$@"
 		;;
 esac
