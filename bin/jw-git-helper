@@ -186,9 +186,9 @@ case "$cmd" in
 	a)
 		if [ $# = 0 ]
 		then
-			git add .
+			git add -A .
 		else
-			git add "$@"
+			git add -A "$@"
 		fi
 		;;
 	m)
@@ -198,7 +198,7 @@ case "$cmd" in
 		;;
 	am)
 		[ -z "$1" ] && crap "You must specify commit message"
-		git add .
+		git add -A .
 		git commit -m "$1"
 		propose_push $(current_branch)
 		;;
