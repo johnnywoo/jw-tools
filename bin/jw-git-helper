@@ -294,10 +294,11 @@ case "$cmd" in
 		$trac_cmd view "$ticket"
 		;;
 	te)
+		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
 		ticket=$(current_ticket "$1")
 		tmpf=`mktemp`
 		tmpf2=`mktemp`
-		$trac_cmd get "$ticket" > $tmpf
+		$JW_TRAC_CMD get "$ticket" > $tmpf
 		cp $tmpf $tmpf2
 		# counting lines to put cursor at the last one in editor
 		lines=$(cat $tmpf | wc -l)
@@ -306,7 +307,7 @@ case "$cmd" in
 		then
 			echo "No changes"
 		else
-			cat $tmpf | $trac_cmd save "$ticket"
+			cat $tmpf | $JW_TRAC_CMD save "$ticket"
 
 			branch=$( [ "$1" ] && echo "$1" || current_branch )
 			project=$(current_project)
@@ -325,7 +326,7 @@ case "$cmd" in
 					if $JW_CONFIRM_CMD "Do you want to assign this ticket to $author?"
 					then
 						echo "About to save ticket $ticket"
-						echo " " | $trac_cmd save "$ticket" owner:$author
+						echo " " | $JW_TRAC_CMD save "$ticket" owner:$author
 					fi
 				fi
 			fi
