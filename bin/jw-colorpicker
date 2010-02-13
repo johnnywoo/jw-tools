@@ -1,0 +1,37 @@
+#!/bin/bash
+
+choose_color()
+{
+	if [ -z "$1" ]
+	then
+		echo -ne "\033[m 1.\033[31m red  "
+		echo -ne "\033[m 3.\033[32m green "
+		echo -ne "\033[m 5.\033[33m yellow  "
+		echo -ne "\033[m7.\033[34m blue"
+		echo
+		echo -ne "\033[m 2.\033[35m pink "
+		echo -ne "\033[m 4.\033[36m cyan  "
+		echo -ne "\033[m 6.\033[37m gray    "
+		echo -ne "\033[m8.\033[m white"
+		echo
+	fi
+	read x
+	case $x in
+		1|r|red)    color="31";;
+		2|p|pink)   color="35";;
+		3|g|green)  color="32";;
+		4|c|cyan)   color="36";;
+		5|y|yellow) color="33";;
+		6|gr|gray)  color="37";;
+		7|b|blue)   color="34";;
+		8|w|white)  color="0";;
+		*)
+			echo "I need a color, man"
+			choose_color again
+			return
+			;;
+	esac
+	echo "$color"
+}
+
+choose_color

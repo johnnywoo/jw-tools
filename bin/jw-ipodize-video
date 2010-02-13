@@ -1,0 +1,1 @@
+ffmpeg -y -i "$1" -f mp4 -s 432x320 -b 1000k -aspect 432:320 -acodec libfaac -async 4800 -dts_delta_threshold 1 -qscale 7 "$1.ipod.mp4"

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+def="y"
+str="[Y/n] "
+
+if [ "$1" = "-n" ]
+then
+	def="n"
+	str="[y/N] "
+	shift
+fi
+
+while true
+do
+	read -p "$1 $str" x
+
+	# empty value
+	[ -z "$x" ] && x=$def
+
+	# correct value
+	[ "$x" = "y" ] && exit 0
+	[ "$x" = "n" ] && exit 1
+done

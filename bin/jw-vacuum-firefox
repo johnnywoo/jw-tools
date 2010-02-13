@@ -1,0 +1,10 @@
+#!/bin/bash
+
+kek=`ps -A | grep firefox | grep -v grep`
+if [ "$kek" != "" ]; then
+	echo "Looks like Firefox is running!"
+	echo "You should close it before vacuuming."
+	exit
+fi
+
+find ~/Library/Application\ Support/Firefox -name '*.sqlite' -print -exec sqlite3 {} "vacuum;" \;

@@ -1,0 +1,87 @@
+#!/bin/bash
+
+key=`cat ~/.ssh/id_rsa.pub`
+
+inputrc="\
+set completion-ignore-case on\
+set show-all-if-unmodified on\
+"
+
+choose_color()
+{
+	echo "Choose a color for bash prompt:"
+	jw-colorpicker
+}
+
+make_profile()
+{
+	color=$(choose_color)
+	echo "
+alias a=\"ls -AGFl --color=never\"
+alias gi=\"grep -i\"
+
+# if there's git, let's insert it too
+__git_ps1_part=""
+type __git_ps1 >/dev/null 2>&1 && __git_ps1_part="\\\$(__git_ps1)"
+
+#  user@host ~$  in chosen color
+PS1=\"\\[\\033[${color}m\\]\\u@\\h \\W\$__git_ps1_part\\\$\\[\\033[0m\\] \"
+
+# Coloring man output
+# start sequences (printed before special text):
+#
+export LESS_TERMCAP_mb=\$'\\E[32m'
+# main selection: man section headers, bold words, everything
+# we remove bold and set color to cyan
+export LESS_TERMCAP_md=\$'\\E[0;36m'
+# uber-special text like \"(END)\" marker when you try to scroll after last line
+# gray text on blue background
+export LESS_TERMCAP_so=\$'\\E[44;33m'
+# option names
+# color them brown
+export LESS_TERMCAP_us=\$'\\E[33m'
+# end sequences (printed after special text):
+# we just make everything look normal again here
+export LESS_TERMCAP_me=\$'\\E[0m'
+export LESS_TERMCAP_se=\$'\\E[0m'
+export LESS_TERMCAP_ue=\$'\\E[0m'
+"
+}
+
+
+
+
+[ -z "$1" ] && echo "usage: "`basename $0`" user@host" && exit
+
+# enable passwordless interaction with keys
+
+echo "Installing public key to $1..."
+key_itself=$(cat "$key" | head -n 1 | cut -d" " -f 2)
+# 1. if there is no .ssh, run the keygen
+# 2. if there is no authorized_keys, create one with correct perms
+# 3. if our key is not there, append it
+ssh "$1" "( [ -d .ssh ] || ssh-keygen -t rsa -N '' -q ) \
+	&& ( [ -f .ssh/authorized_keys ] \
+		|| ( touch .ssh/authorized_keys \
+			&& chmod 600 .ssh/authorized_keys \
+			&& echo \".ssh/authorized_keys file was created\" \
+		) \
+	) \
+	&& (cat .ssh/authorized_keys | grep \"key_itself\" >/dev/null \
+		|| echo \"$key\" >> .ssh/authorized_keys \
+	)"
+echo "done"
+
+# okay, now I need to make myself at home
+
+echo "Installing profile..."
+profile=$(make_profile)
+ssh $1 "echo \"$profile\" > .bash_profile_jw \
+	&& ( cat .bash_profile | grep bash_profile_jw || \
+		echo 'source .bash_profile_jw' >> .bash_profile \
+	)"
+echo "done"
+
+echo "Installing inputrc..."
+ssh $1 " [ -f .inputrc ] && echo 'already there' \
+	|| echo \"$inputrc\" > .inputrc && echo 'done'"

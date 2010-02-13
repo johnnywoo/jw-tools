@@ -1,0 +1,357 @@
+#!/bin/bash
+
+# exit on first error
+set -e
+
+trac_cmd="ssh www@ibm.loc /home/www/trac"
+rw_cmd="rw"
+
+usage()
+{
+cat << EOF
+Usage: gh command [args]
+Information:
+  s       git status
+  so      git remote show origin
+  l       List of all branches. Auto-updates remote list.
+  i       Show changes in current branch since master.
+  dl      Show diff for last commit in the branch.
+  help    An instruction on using this tool.
+Committing:
+  a       git add .
+  m       git commit
+  am      Commit all local changes.
+  revert  git checkout --
+  ss      git stash
+  sp      git stash pop
+  p       Push current branch to origin.
+Branches:
+  b       Switch to a branch, creates it if necessary.
+  bm      Switch to master branch.
+  g       Create a local branch from the remote one, then rebase.
+          Will overwrite local branch completely.
+Manipulation:
+  rd      Deletes a remote branch.
+  accept  Merge current branch into master, push master,
+          then remove the branch from both servers.
+Trac:
+  t       Show ticket info.
+  te      Edit ticket description.
+  fix     Close ticket (fixed).
+  ta      Change ticket owner according to branch name.
+Review:
+  rw      Touch code review status.
+EOF
+}
+
+help()
+{
+usage
+cat << EOF
+
+Working with repositories as a lead programmer:
+
+ 1. Look at the list of branches in all repos:
+
+       rw
+
+    It will show all development branches with review status
+    next to them.
+
+ 2. If you want to examine a branch, grab it:
+
+       gh g branch_name
+
+    Grab will checkout the branch as it is in origin, discarding any local changes,
+    so you can be sure that you're looking at the latest code.
+
+    Grab will also rebase the local branch to master. If rebase fails, you should
+    tell the developer to rebase his local copy and push again. If you want to
+    merge yourself, don't forget that running grab again will erase your merge.
+
+    You can omit branch name to regrab current branch.
+
+ 3. Open the ticket description:
+
+       gh t
+
+    Ticket number is taken from the name of current branch.
+
+ 4. Use your IDE and merge tools to examine the changes.
+
+ 5. If you don't want to accept the branch, you can edit ticket description
+    to tell its owner what is wrong:
+
+       gh te
+
+    Then mark review complete:
+
+       gh rw [review_summary]
+
+    The review summary does not go into the ticket, it is only displayed in output of 'rw',
+    so you know what was reviewed and which branches were updated afterwards.
+
+ 6. If you want to accept the branch into master, simply type:
+
+      gh accept
+
+    This will merge the branch into master, remove the branch from both local and remote
+    servers, and close the ticket as fixed (you will be asked for confirmation).
+
+EOF
+}
+
+current_branch()
+{
+	git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+}
+
+guess_ticket()
+{
+	branch="$1"
+	[ -z "$branch" ] && branch=$(current_branch)
+	ticket=$(echo "$branch" | cut -d _ -f 2)
+	[[ "$ticket" =~ ^[0-9]+$ ]] || ticket=""
+	echo "$ticket"
+}
+
+guess_author()
+{
+	branch="$1"
+	[ -z "$branch" ] && branch=$(current_branch)
+	echo "$branch" | cut -d _ -f 1
+}
+
+current_ticket()
+{
+	ticket="$1"
+	# if no ticket specified, try to cut ID out of current branch name
+	[ -z "$ticket" ] && ticket=$(guess_ticket)
+	[[ "$ticket" =~ ^[0-9]+$ ]] || crap "Need ticket number"
+	echo "$ticket"
+}
+
+crap()
+{
+	[ "$1" ] && echo "$1" >&2
+	exit 1
+}
+
+current_project()
+{
+	x=`pwd`
+	while [ "$x" != "/" ]
+	do
+		[ -d "$x/.git" ] && echo `basename $x` && return
+		x=`dirname "$x"`
+	done
+	crap "Not in a git repository"
+}
+
+propose_push()
+{
+	if [ "$1" ] && confirm -n "Do you want to push $1 to origin?"
+	then
+		git push origin "$1"
+	fi
+}
+
+# die if no args
+[ $# = 0 ] && usage && exit 0
+
+cmd="$1"
+shift 1
+
+case "$cmd" in
+	help)
+		help
+		;;
+	s)
+		git status
+		;;
+	so)
+		git remote show origin
+		;;
+	l)
+		git remote update > /dev/null
+		git branch -a
+		;;
+	i)
+		git log -M -C --stat --summary --abbrev-commit  master..
+		;;
+	dl)
+		git diff HEAD^..HEAD
+		;;
+
+	a)
+		if [ $# = 0 ]
+		then
+			git add .
+		else
+			git add "$@"
+		fi
+		;;
+	m)
+		[ -z "$1" ] && crap "You must specify commit message"
+		git commit -m "$1"
+		propose_push $(current_branch)
+		;;
+	am)
+		[ -z "$1" ] && crap "You must specify commit message"
+		git add .
+		git commit -m "$1"
+		propose_push $(current_branch)
+		;;
+	revert)
+		git checkout -- "$@"
+		;;
+	p)
+		branch=$(current_branch)
+		git push origin "$branch"
+		;;
+	ss)
+		git stash
+		;;
+	sp)
+		git stash pop
+		;;
+
+	b)
+		[ -z "$1" ] && crap "You must specify the branch"
+		needcreate=""
+		git branch | grep "$1" >/dev/null || needcreate="-b"
+		git checkout $needcreate "$1"
+		;;
+	bm)
+		git checkout master
+		;;
+	g|grab)
+		git remote update > /dev/null
+		branch="$1"
+		[ -z "$branch" ] && branch=$(current_branch)
+		[ "$branch" == 'master' ] && crap "Cannot grab master"
+		[ -z `git branch -r | grep "origin/$branch"` ] && crap "No branch $branch in origin"
+		# going to master so we can delete current branch
+		git checkout master
+		# try to delete the branch;
+		# error means there was no branch, it should be ignored
+		git branch -D "$branch" 2> /dev/null || true
+		echo
+		echo "== Checking out $branch"
+		git checkout -b "$branch" "origin/$branch"
+		echo
+		echo "== Rebasing to master"
+		git rebase master
+		;;
+
+	rd)
+		branch="$1"
+		[ -z "$branch" ] && branch=$(current_branch)
+		git branch -r | grep "origin/$branch" >/dev/null || crap "No branch $branch in origin"
+		git push origin :$branch
+		;;
+	accept)
+		branch=$(current_branch)
+		echo
+		echo "== Current branch is $branch"
+		[ "$branch" == "master" ] && crap
+		confirm "Do you wish to merge this branch into master and then delete the branch?" || exit 0
+		echo
+		echo "== Switching to master"
+		git checkout master
+		echo
+		echo "== Merging $branch into master"
+		git merge "$branch"
+		echo
+		echo "== Pushing master"
+		git push origin master
+		echo
+		echo "== Removing local branch $branch"
+		git branch -d "$branch"
+		if git branch -r | grep "origin/$branch" >/dev/null
+		then
+			echo
+			echo "== Removing remote branch $branch"
+			git push origin :$branch
+		fi
+		ticket=$(guess_ticket "$branch")
+		if [ "$ticket" ]
+		then
+			ticket_info=$($trac_cmd view "$ticket" | head -n 2)
+			if echo "$ticket_info" | head -n 1 | grep -v closed >/dev/null
+			then
+				echo
+				echo "== Trac ticket"
+				echo "$ticket_info"
+				confirm "Do you want to close this ticket now?" && echo " " | $trac_cmd save "$ticket" status:closed resolution:fixed
+			fi
+		fi
+		;;
+
+	t)
+		ticket=$(current_ticket "$1")
+		$trac_cmd view "$ticket"
+		;;
+	te)
+		ticket=$(current_ticket "$1")
+		tmpf=`mktemp`
+		tmpf2=`mktemp`
+		$trac_cmd get "$ticket" > $tmpf
+		cp $tmpf $tmpf2
+		# counting lines to put cursor at the last one in editor
+		lines=$(cat $tmpf | wc -l)
+		nano -ti +$lines $tmpf
+		if diff $tmpf $tmpf2 >/dev/null
+		then
+			echo "No changes"
+		else
+			cat $tmpf | $trac_cmd save "$ticket"
+
+			branch=$( [ "$1" ] && echo "$1" || current_branch )
+			project=$(current_project)
+			if [ "$branch" ]
+			then
+				# touching branch code review
+				echo
+				confirm "Do you want to mark review complete for $project/$branch?" && $rw_cmd set $project/$branch
+
+				# reverting ticket back to its owner
+				author=$(guess_author "$branch")
+				if head -n 1 "$tmpf" | grep -v "$author" >/dev/null
+				then
+					echo
+					$trac_cmd view "$ticket" | head -n 2
+					if confirm "Do you want to assign this ticket to $author?"
+					then
+						echo "About to save ticket $ticket"
+						echo " " | $trac_cmd save "$ticket" owner:$author
+					fi
+				fi
+			fi
+		fi
+		rm $tmpf $tmpf2
+		;;
+	fix)
+		ticket=$(current_ticket "$1")
+		echo "Closing ticket $ticket"
+		echo " " | $trac_cmd save "$ticket" status:closed resolution:fixed
+		;;
+	rw)
+		branch=$(current_branch)
+		project=$(current_project)
+		$rw_cmd set $project/$branch "$1"
+		;;
+	ta)
+		ticket=$(current_ticket "$1")
+		author=$(guess_author)
+		$trac_cmd view "$ticket" | head -n 2
+		confirm "Do you want to assign this ticket to $author?" || exit
+		echo "About to save ticket $ticket"
+		echo " " | $trac_cmd save "$ticket" owner:$author
+		;;
+	*)
+		echo "Unrecognized command: $cmd" >&2
+		confirm "Do you want to run that with git?" || exit 0
+		git "$cmd" "$@"
+		;;
+esac
