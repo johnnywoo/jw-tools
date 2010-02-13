@@ -150,6 +150,17 @@ propose_push() { # branch name
 	fi
 }
 
+get_commit_message() { # message from script args
+	[ "$1" ] && echo "$1" && return 0
+	# okay, let's show him the editor
+	tmpf=`mktemp`
+	echo -e "\n\n=-=-=-=-=-=-=-=-=-=-=-=-=-=\n" >>tmpf
+	git status >>tmpf
+	nano -ti "$tmpf"
+	rm "$tmpf"
+	crap "You must specify commit message"
+}
+
 # die if no args
 [ $# = 0 ] && usage && exit 0
 
@@ -186,14 +197,14 @@ case "$cmd" in
 		fi
 		;;
 	m)
-		[ -z "$1" ] && crap "You must specify commit message"
-		git commit -m "$1"
+		msg=$(get_commit_message "$1")
+		git commit -m "$msg"
 		propose_push $(current_branch)
 		;;
 	am)
-		[ -z "$1" ] && crap "You must specify commit message"
 		git add -A .
-		git commit -m "$1"
+		msg=$(get_commit_message "$1")
+		git commit -m "$msg"
 		propose_push $(current_branch)
 		;;
 	revert)
