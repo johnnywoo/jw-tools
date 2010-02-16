@@ -6,11 +6,11 @@
 // See `gh` for explanations on how to work with reviews.
 //
 
-$home = dirname(__FILE__).'/../sites';
+$home = dirname(__FILE__).'/../../sites';
 
-$fname = $home.'/code-review.db';
+$fname = $_SERVER['HOME'].'/.jw-code-reviewer-db';
 
-$trac_cmd = "ssh www@ibm.loc /home/www/trac";
+$trac_cmd = "ssh agalkin@trac.vps.loc bin/jw-tools";
 
 $projects = array(
 	'att.ocg.ru',
