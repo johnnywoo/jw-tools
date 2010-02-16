@@ -137,15 +137,20 @@ crap()
 	exit 1
 }
 
-current_project()
+current_project_root()
 {
 	x=`pwd`
 	while [ "$x" != "/" ]
 	do
-		[ -d "$x/.git" ] && echo `basename $x` && return
+		[ -d "$x/.git" ] && echo "$x" && return
 		x=`dirname "$x"`
 	done
 	crap "Not in a git repository"
+}
+
+current_project()
+{
+	basename "$(current_project_root)"
 }
 
 propose_push()
@@ -153,6 +158,22 @@ propose_push()
 	if [ "$1" ] && $JW_CONFIRM_CMD -n "Do you want to push $1 to origin?"
 	then
 		git push origin "$1"
+	fi
+}
+
+wait_for_git_lock()
+{
+	pth="$(current_project_root)"
+	lockf="$pth/.git/index.lock"
+	if [ -e "$lockf" ]
+	then
+		echo -ne "Waiting for other process to release git lock"
+		while [ -e "$lockf" ]
+		do
+			sleep 1
+			echo -ne "."
+		done
+		echo
 	fi
 }
 
@@ -167,23 +188,29 @@ case "$cmd" in
 		help
 		;;
 	s)
+		wait_for_git_lock
 		git status
 		;;
 	so)
+		wait_for_git_lock
 		git remote show origin
 		;;
 	l)
+		wait_for_git_lock
 		git remote update > /dev/null
 		git branch -a
 		;;
 	i)
+		wait_for_git_lock
 		git log -M -C --stat --summary --abbrev-commit  master..
 		;;
 	dl)
+		wait_for_git_lock
 		git diff HEAD^..HEAD
 		;;
 
 	a)
+		wait_for_git_lock
 		if [ $# = 0 ]
 		then
 			git add -A .
@@ -192,40 +219,49 @@ case "$cmd" in
 		fi
 		;;
 	m)
+		wait_for_git_lock
 		[ -z "$1" ] && crap "You must specify commit message"
 		git commit -m "$1"
 		propose_push $(current_branch)
 		;;
 	am)
+		wait_for_git_lock
 		[ -z "$1" ] && crap "You must specify commit message"
 		git add -A .
 		git commit -m "$1"
 		propose_push $(current_branch)
 		;;
 	revert)
+		wait_for_git_lock
 		git checkout -- "$@"
 		;;
 	p)
+		wait_for_git_lock
 		branch=$(current_branch)
 		git push origin "$branch"
 		;;
 	ss)
+		wait_for_git_lock
 		git stash
 		;;
 	sp)
+		wait_for_git_lock
 		git stash pop
 		;;
 
 	b)
+		wait_for_git_lock
 		[ -z "$1" ] && crap "You must specify the branch"
 		needcreate=""
 		git branch | grep "$1" >/dev/null || needcreate="-b"
 		git checkout $needcreate "$1"
 		;;
 	bm)
+		wait_for_git_lock
 		git checkout master
 		;;
 	g|grab)
+		wait_for_git_lock
 		git remote update > /dev/null
 		branch="$1"
 		[ -z "$branch" ] && branch=$(current_branch)
@@ -245,12 +281,14 @@ case "$cmd" in
 		;;
 
 	rd)
+		wait_for_git_lock
 		branch="$1"
 		[ -z "$branch" ] && branch=$(current_branch)
 		git branch -r | grep "origin/$branch" >/dev/null || crap "No branch $branch in origin"
 		git push origin :$branch
 		;;
 	accept)
+		wait_for_git_lock
 		branch=$(current_branch)
 		echo
 		echo "== Current branch is $branch"
