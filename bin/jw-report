@@ -1,0 +1,157 @@
+#!/usr/bin/php
+<?
+
+$no_network = !empty($argv[1]) && $argv[1] == '-n';
+
+$status = cmd2array(`mysql -sNe "show global status;"`);
+$vars   = cmd2array(`mysql -sNe "show variables;"`);
+
+$memory_info = preg_split('/\s+/', `free -b | grep Mem`);
+$memory = array(
+	'total' => $memory_info[1],
+	'used'  => $memory_info[2],
+);
+$swap_info = preg_split('/\s+/', `free -b | grep Swap`);
+$swap = array(
+	'total' => $swap_info[1],
+	'used'  => $swap_info[2],
+);
+
+if(!$no_network)
+{
+	$apc = unserialize(file_get_contents("http://127.0.0.1/apc_cleanup.php?get_info=yes"));
+}
+else $apc = array();
+
+echo "MySQL ".$vars['version'].", uptime ".uptime_fmt($status['Uptime'])."\n";
+if(!empty($apc))
+{
+	echo 'APC '.$apc['version'].', uptime '.uptime_fmt(time() - $apc['info']['start_time'])."\n";
+}
+
+$statements = array();
+foreach($status as $k=>$v)
+{
+	if(substr($k, 0, 4) == 'Com_')
+	{
+		$statements[substr($k, 4)] = $v;
+	}
+}
+$statements['cached'] = $status['Qcache_hits'];
+$statements['total']  = $status['Queries'];
+arsort($statements);
+
+echo "\n";
+echo "Queries:\n";
+foreach($statements as $k=>$v)
+{
+	if($v*100/$status['Queries'] < 1) break;
+	echo qs_str($k, $v, $status)."\n";
+}
+
+echo "\n";
+echo "Memory:\n";
+
+echo mem_str('physical', $memory['used'], $memory['total'])."\n";
+echo mem_str('swap', $swap['used'], $swap['total'])."\n";
+
+$qs = $vars['query_cache_size'];
+echo mem_str('mysql query cache', $qs - $status['Qcache_free_memory'], $qs)."\n";
+$ps = $vars['innodb_buffer_pool_size'];
+$pcurr = round($ps * (1 - $status['Innodb_buffer_pool_pages_free']/$status['Innodb_buffer_pool_pages_total']));
+echo mem_str('mysql innodb pool', $pcurr, $ps)."\n";
+if(!empty($apc))
+{
+	$as = $apc['sma']['seg_size'] * $apc['sma']['num_seg'];
+	echo mem_str('apc', $as - $apc['sma']['avail_mem'], $as)."\n";
+}
+
+$tmp_disk = $status['Created_tmp_disk_tables'];
+$tmp_all  = $status['Created_tmp_tables'];
+if($tmp_disk)
+{
+	echo "\n";
+	$percent = round($tmp_disk*100/$tmp_all, 1);
+	echo "MySQL created ".big_num_fmt($tmp_disk)." tmp tables on disk ($percent% of ".big_num_fmt($tmp_all)." tmp tables)\n";
+	echo "Maximum memory for tables: tmp ".big_mem_fmt($vars['tmp_table_size'], false).", heap ".big_mem_fmt($vars['max_heap_table_size'], false)."\n";
+}
+
+
+
+
+function qs_str($name, $n, $status)
+{
+	$percent = round($n*100/$status['Queries']);
+	$rps = $n/$status['Uptime'];
+	return sprintf('% 17s  % 7s % 5.1f r/s  % 3d%%', $name, big_num_fmt($n), $rps, $percent).'  '.str_repeat('=', $percent/2);
+}
+
+function mem_str($name, $curr, $max)
+{
+	$percent = round($curr*100/$max);
+	return sprintf('% 17s % 7s of % 7s  % 3d%%', $name, big_mem_fmt($curr), big_mem_fmt($max), $percent).'  '.str_repeat('*', ceil($percent/2)).str_repeat('-', 50-ceil($percent/2));
+}
+
+function big_num_fmt($n, $fix_size = true)
+{
+	if($n < 1000) return $n;
+	$n /= 1000;
+	if($n < 1000) return small_num_fmt($n, $fix_size).'k';
+	$n /= 1000;
+	if($n < 1000) return small_num_fmt($n, $fix_size).'m';
+	$n = $n/1000;
+	return small_num_fmt($n, $fix_size).'g';
+}
+
+function big_mem_fmt($n, $fix_size = true)
+{
+	if($n < 1024) return $n;
+	$n /= 1024;
+	if($n < 1024) return small_num_fmt($n, $fix_size).'K';
+	$n /= 1024;
+	if($n < 1024) return small_num_fmt($n, $fix_size).'M';
+	$n /= 1024;
+	return small_num_fmt($n, $fix_size).'G';
+}
+
+function small_num_fmt($n, $fix_size = true)
+{
+	return $fix_size ? sprintf('%.1f', $n) : round($n, 1);
+}
+
+function cmd2array($text)
+{
+	$list = array();
+	foreach(explode("\n", $text) as $line)
+	{
+		if(!strlen(trim($line))) continue;
+		list($k, $v) = explode("\t", $line);
+		$list[$k] = $v;
+	}
+	return $list;
+}
+
+// seconds
+function uptime_fmt($t)
+{
+	$s = array();
+	$s[] = $t%60 . 's';
+	$t = floor($t / 60);
+	$s[] = $t%60 . 'm';
+	$t = floor($t / 60);
+	$s[] = $t%24 . 'h';
+	$t = floor($t / 24);
+	$s[] = $t . 'd';
+
+	$s = array_reverse($s);
+	$str = ''; $i = 0;
+	foreach($s as $x)
+	{
+		if($x[0] != '0')
+		{
+			if(++$i > 2) break;
+			$str .= $x.' ';
+		}
+	}
+	return trim($str);
+}
