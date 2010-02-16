@@ -225,9 +225,9 @@ case "$cmd" in
 		wait_for_git_lock
 		if [ $# = 0 ]
 		then
-			git add -A .
+			git add -Av .
 		else
-			git add -A "$@"
+			git add -Av "$@"
 		fi
 		;;
 	m)
@@ -238,7 +238,7 @@ case "$cmd" in
 		;;
 	am)
 		wait_for_git_lock
-		git add -A .
+		git add -Av .
 		msg=$(get_commit_message "$1")
 		git commit -m "$msg"
 		propose_push $(current_branch)
