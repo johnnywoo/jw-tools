@@ -2,10 +2,6 @@
 
 // this script shows the part of php.ini that actually changes something to a non-default value
 
-
-// NO EXTENSIONS!
-
-
 function get_config($args)
 {
 	$cmd = 'php '.$args.' -r '.escapeshellarg('echo base64_encode(serialize(ini_get_all(null, false)));');
@@ -59,12 +55,26 @@ if($verbose)
 	}
 }
 
+$section = '';
+$section_out = false;
 foreach(file($fname) as $line)
 {
-	// ignoring comments, sections and empty lines
-	if(!preg_match('/^\s*([^\s;\]]+)\s*=/', $line, $m)) continue;
+	if($line[0] == '[')
+	{
+		$section = $line;
+		$section_out = false;
+		continue;
+	}
+	// ignoring comments and empty lines
+	if(!preg_match('/^\s*([^\s;]+)\s*=/', $line, $m)) continue;
 	$name = $m[1];
 	// ignoring non-change lines
 	if(!in_array($name, $diff_keys)) continue;
+
+	if(!$section_out)
+	{
+		echo "\n".$section;
+		$section_out = true;
+	}
 	echo $line;
 }
