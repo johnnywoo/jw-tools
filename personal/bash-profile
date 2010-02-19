@@ -9,7 +9,7 @@ PATH=/usr/local/php/bin:$PATH
 PATH=/usr/local/mysql/bin:$PATH
 PATH=/usr/local/subversion/bin:$PATH
 PATH=/usr/local/git/bin:$PATH
-PATH=$HOME/jw-tools/bin:$PATH
+PATH="$(dirname "$JW_PERSONAL_DIR")/bin:$PATH"
 export PATH
 
 export LC_CTYPE=ru_RU.UTF-8
