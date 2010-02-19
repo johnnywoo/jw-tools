@@ -1,0 +1,25 @@
+
+PATH=/usr/local/bin:$PATH
+PATH=/usr/local/apache2/bin:$PATH
+PATH=/usr/local/php/bin:$PATH
+PATH=/usr/local/mysql/bin:$PATH
+PATH=/usr/local/subversion/bin:$PATH
+PATH=/usr/local/git/bin:$PATH
+PATH=$HOME/jw-tools/bin:$PATH
+export PATH
+
+export LC_CTYPE=ru_RU.UTF-8
+
+export MANPATH="/usr/local/man:$MANPATH"
+
+alias a="ls -al"
+alias g="grep -i"
+
+# copy this line into your profile
+# available colors: red green blue yellow cyan pink gray white
+#PS1_COLOR="blue"
+
+[ -z "PS1_COLOR" ] && PS1_COLOR="white"
+PS1="\[\033[$(jw-colorpicker $PS1_COLOR)m\]\u \W\$(__git_ps1 \" (%s)\")\$\[\033[0m\] "
+
+source .git-completion.sh
