@@ -1,4 +1,8 @@
 
+###
+## PATH
+#
+
 PATH=/usr/local/bin:$PATH
 PATH=/usr/local/apache2/bin:$PATH
 PATH=/usr/local/php/bin:$PATH
@@ -12,14 +16,68 @@ export LC_CTYPE=ru_RU.UTF-8
 
 export MANPATH="/usr/local/man:$MANPATH"
 
-alias a="ls -al"
+
+###
+## ALIAS
+#
+
+if ls --file-type / >/dev/null 2>&1
+then
+	# CentOS
+	alias a="ls -AGl --color=never --file-type"
+else
+	# Mac OS X
+	alias a="ls -Apl"
+fi
+
 alias g="grep -i"
 
-# copy this line into your profile
+alias iih="sudo /etc/init.d/httpd"
+alias iim="sudo /etc/init.d/mysqld"
+
+
+###
+## PS1
+#
+
+source "$JW_PERSONAL_DIR/git-completion.sh"
+
 # available colors: red green blue yellow cyan pink gray white
-#PS1_COLOR="blue"
-
 [ -z "PS1_COLOR" ] && PS1_COLOR="white"
-PS1="\[\033[$(jw-colorpicker $PS1_COLOR)m\]\u \W\$(__git_ps1 \" (%s)\")\$\[\033[0m\] "
+c=$(jw-colorpicker $PS1_COLOR)
 
-source .git-completion.sh
+# we ignore host part for .local hosts
+h=$(/bin/hostname | /usr/bin/grep -v '.local$' >/dev/null && echo -ne '@\h')
+
+# user@host folder (git)$
+PS1="\[\033[${c}m\]\u$h \W\$(__git_ps1 \" (%s)\")\$\[\033[0m\] "
+
+unset c h PS1_COLOR JW_PERSONAL_DIR
+
+
+###
+## MISC
+#
+
+HISTFILESIZE=100000000
+HISTSIZE=10000
+
+
+# Coloring man output
+# start sequences (printed before special text):
+#
+export LESS_TERMCAP_mb=$'\E[32m'
+# main selection: man section headers, bold words, everything
+# we remove bold and set color to cyan
+export LESS_TERMCAP_md=$'\E[0;36m'
+# uber-special text like "(END)" marker when you try to scroll after last line
+# gray text on blue background
+export LESS_TERMCAP_so=$'\E[44;33m'
+# option names
+# color them brown
+export LESS_TERMCAP_us=$'\E[33m'
+# end sequences (printed after special text):
+# we just make everything look normal again here
+export LESS_TERMCAP_me=$'\E[0m'
+export LESS_TERMCAP_se=$'\E[0m'
+export LESS_TERMCAP_ue=$'\E[0m'

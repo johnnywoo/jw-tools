@@ -14,7 +14,7 @@ if [ -e "$HOME/.inputrc" ]
 then
 	echo "already exists"
 else
-	ln -s "$fld/inputrc" $HOME/.inputrc
+	ln -s "$fld/inputrc" "$HOME/.inputrc"
 	echo "done"
 fi
 
@@ -28,6 +28,8 @@ then
 else
 	echo '' >> "$profile_fname"
 	echo 'PS1_COLOR=white # red green blue yellow cyan pink gray white' >> "$profile_fname"
-	echo "source $fld/bash-profile" >> "$profile_fname"
-	echo "done (you can change PS1_COLOR in \~/$(basename $profile_fname))"
+	echo '# we need this variable, please do not remove it' >> "$profile_fname"
+	echo "JW_PERSONAL_DIR='$fld'" >> "$profile_fname"
+	echo 'source "$JW_PERSONAL_DIR/bash-profile"' >> "$profile_fname"
+	echo "done (you can change PS1_COLOR in ~/$(basename $profile_fname))"
 fi
