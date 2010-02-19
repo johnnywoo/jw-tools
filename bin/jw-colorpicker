@@ -15,8 +15,17 @@ choose_color()
 		echo -ne "\033[m8.\033[m white"
 		echo
 	fi
-	read x
-	case $x in
+
+	if [ -z "$1" -o "$1" == "ask-without-header" ]
+	then
+		read x
+		verb="yes"
+	else
+		x="$1"
+		verb=""
+	fi
+
+	case "$x" in
 		1|r|red)    color="31";;
 		2|p|pink)   color="35";;
 		3|g|green)  color="32";;
@@ -26,12 +35,17 @@ choose_color()
 		7|b|blue)   color="34";;
 		8|w|white)  color="0";;
 		*)
-			echo "I need a color, man"
-			choose_color again
-			return
+			if [ "$verb" ]
+			then
+				echo "I need a color, man"
+				choose_color ask-without-header
+				return
+			else
+				exit 1
+			fi
 			;;
 	esac
 	echo "$color"
 }
 
-choose_color
+choose_color "$1"
