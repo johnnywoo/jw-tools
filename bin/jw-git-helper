@@ -341,7 +341,7 @@ case "$cmd" in
 	t)
 		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
 		ticket=$(current_ticket "$1")
-		$trac_cmd view "$ticket"
+		$JW_TRAC_CMD view "$ticket"
 		;;
 	te)
 		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
@@ -372,7 +372,7 @@ case "$cmd" in
 				if head -n 1 "$tmpf" | grep -v "$author" >/dev/null
 				then
 					echo
-					$trac_cmd view "$ticket" | head -n 2
+					$JW_TRAC_CMD view "$ticket" | head -n 2
 					if $JW_CONFIRM_CMD "Do you want to assign this ticket to $author?"
 					then
 						echo "About to save ticket $ticket"
@@ -386,7 +386,7 @@ case "$cmd" in
 	fix)
 		ticket=$(current_ticket "$1")
 		echo "Closing ticket $ticket"
-		echo " " | $trac_cmd save "$ticket" status:closed resolution:fixed
+		echo " " | $JW_TRAC_CMD save "$ticket" status:closed resolution:fixed
 		;;
 	rw)
 		branch=$(current_branch)
@@ -396,10 +396,10 @@ case "$cmd" in
 	ta)
 		ticket=$(current_ticket "$1")
 		author=$(guess_author)
-		$trac_cmd view "$ticket" | head -n 2
+		$JW_TRAC_CMD view "$ticket" | head -n 2
 		$JW_CONFIRM_CMD "Do you want to assign this ticket to $author?" || exit
 		echo "About to save ticket $ticket"
-		echo " " | $trac_cmd save "$ticket" owner:$author
+		echo " " | $JW_TRAC_CMD save "$ticket" owner:$author
 		;;
 	*)
 		echo "Unrecognized command: $cmd" >&2
