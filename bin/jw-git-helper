@@ -113,7 +113,7 @@ current_branch() {
 
 # cuts first numeric sequence from the input
 guess_ticket() { # ticket id or branch name
-	echo "$1" | egrep -o '[[:digit:]]{5}' | head -n 1
+	echo "$1" | egrep -o '[0-9]+' | head -n 1
 }
 
 guess_author() { # [branch name]
