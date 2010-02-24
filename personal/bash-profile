@@ -30,6 +30,9 @@ else
 	alias a="ls -Apl"
 fi
 
+alias ..="cd .."
+alias ...="cd ../.."
+
 alias g="grep -i"
 
 alias iih="sudo /etc/init.d/httpd"
@@ -47,7 +50,7 @@ source "$JW_PERSONAL_DIR/git-completion.sh"
 c=$(jw-colorpicker $PS1_COLOR)
 
 # we ignore host part for .local hosts
-h=$(/bin/hostname | /usr/bin/grep '.local$' >/dev/null || echo -ne '@\h')
+h=$(hostname | grep '.local$' >/dev/null || echo -ne '@\h')
 
 # user@host folder (git)$
 PS1="\[\033[${c}m\]\u$h \W\$(__git_ps1 \" (%s)\")\$\[\033[0m\] "
