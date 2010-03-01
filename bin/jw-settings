@@ -8,7 +8,7 @@ JW_SETTINGS_FILE="$HOME/.jw-settings"
 ## settings (copy this part of the file into ~/.jw-settings)
 #
 
-# you probably want this to be "ssh user@trac-server jw-tools/bin/jw-trac"
+# you probably want this to be "ssh user@trac-server .../trac-cli/trac"
 # if empty, the trac functionality in gh and other scripts would be disabled
 JW_TRAC_CMD=""
 
