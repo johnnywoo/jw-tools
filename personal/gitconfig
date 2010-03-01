@@ -1,0 +1,16 @@
+[user]
+name  = agalkin
+email = agalkin@agalkin.ru
+
+[color]
+ui          = auto
+branch      = auto
+diff        = auto
+interactive = auto
+status      = auto
+
+[core]
+editor = nano
+
+[diff "cp1251"]
+textconv = jw-win2utf
