@@ -17,13 +17,15 @@ Information:
   i       Show changes in current branch since master.
   dl      Show diff for last commit in the branch.
   help    An instruction on using this tool.
+Working:
+  u       git pull
+  ss      git stash
+  sp      git stash pop
+  r       git checkout --
 Committing:
   a       git add
   m       git commit
   am      Commit all local changes.
-  revert  git checkout --
-  ss      git stash
-  sp      git stash pop
   p       Push current branch to origin.
 Branches:
   b       Switch to a branch, creates it if necessary.
@@ -133,14 +135,7 @@ current_ticket() { # [ticket id or branch name]
 	echo "$ticket"
 }
 
-crap()
-{
-	[ "$1" ] && echo "$1" >&2
-	exit 1
-}
-
-current_project_root()
-{
+current_project_root() {
 	x=`pwd`
 	while [ "$x" != "/" ]
 	do
@@ -150,8 +145,7 @@ current_project_root()
 	crap "Not in a git repository"
 }
 
-current_project()
-{
+current_project() {
 	basename "$(current_project_root)"
 }
 
@@ -162,17 +156,16 @@ propose_push() { # branch name
 	fi
 }
 
-wait_for_git_lock()
-{
+wait_for_git_lock() {
 	pth="$(current_project_root)"
 	lockf="$pth/.git/index.lock"
 	if [ -e "$lockf" ]
 	then
-		echo -ne "Waiting for other process to release git lock"
+		echo -ne "Waiting for other process to release git lock.."
 		while [ -e "$lockf" ]
 		do
-			sleep 1
 			echo -ne "."
+			sleep 1
 		done
 		echo
 	fi
@@ -182,11 +175,17 @@ get_commit_message() { # message from script args
 	[ "$1" ] && echo "$1" && return 0
 	# okay, let's show him the editor
 	tmpf=`mktemp`
-	echo -e "\n\n=-=-=-=-=-=-=-=-=-=-=-=-=-=\n" >>tmpf
-	git status >>tmpf
+	echo -e "\n\n=-=-=-=-=-=-=-=-=-=-=-=-=-=\n" >>"$tmpf"
+	git status >>"$tmpf"
+	cat "$tmpf" >&2
 	nano -ti "$tmpf"
 	rm "$tmpf"
 	crap "You must specify commit message"
+}
+
+open_an_editor()
+{
+	nano -ti "$tmpf"
 }
 
 # die if no args
@@ -243,14 +242,23 @@ case "$cmd" in
 		git commit -m "$msg"
 		propose_push $(current_branch)
 		;;
-	revert)
+	r)
 		wait_for_git_lock
-		git checkout -- "$@"
+		if [ $# = 0 ]
+		then
+			git checkout -- .
+		else
+			git checkout -- "$@"
+		fi
 		;;
 	p)
 		wait_for_git_lock
 		branch=$(current_branch)
 		git push origin "$branch"
+		;;
+	u)
+		wait_for_git_lock
+		git pull
 		;;
 	ss)
 		wait_for_git_lock
