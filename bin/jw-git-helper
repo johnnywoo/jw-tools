@@ -41,8 +41,8 @@ Trac:
   te      Edit ticket description.
   fix     Close ticket (fixed).
   ta      Change ticket owner according to branch name.
-Review:
   rw      Touch code review status.
+  w       Show review status across all configured repos
 EOF
 }
 
@@ -55,7 +55,7 @@ Working with repositories as a lead programmer:
 
  1. Look at the list of branches in all repos:
 
-       rw
+       gh w
 
     It will show all development branches with review status
     next to them.
@@ -368,12 +368,11 @@ case "$cmd" in
 			cat $tmpf | $JW_TRAC_CMD save "$ticket"
 
 			branch=$( [ "$1" ] && echo "$1" || current_branch )
-			project=$(current_project)
 			if [ "$branch" ]
 			then
 				# touching branch code review
 				echo
-				$JW_CONFIRM_CMD "Do you want to mark review complete for $project/$branch?" && $JW_RW_CMD set $project/$branch
+				$JW_CONFIRM_CMD "Do you want to mark review complete for $project/$branch?" && $JW_TRAC_CMD mark-review "$ticket"
 
 				# reverting ticket back to its owner
 				author=$(guess_author "$branch")
@@ -397,9 +396,65 @@ case "$cmd" in
 		echo " " | $JW_TRAC_CMD save "$ticket" status:closed resolution:fixed
 		;;
 	rw)
-		branch=$(current_branch)
-		project=$(current_project)
-		$JW_RW_CMD set $project/$branch "$1"
+		ticket=$(current_ticket "$1")
+		echo "Marking ticket $ticket as reviewed"
+		$JW_TRAC_CMD mark-review "$ticket"
+		;;
+	w)
+		[ -z "$JW_REVIEWABLE_PROJECTS" ] && crap "No repos configured for reviewing"
+
+		# accumulating report
+		report=$(
+			echo "$JW_REVIEWABLE_PROJECTS" | while read fld; do
+				cd "$fld"
+				project=$(basename "$fld")
+				echo "project $project"
+
+				# need the sort so grep would not cause exit
+				git branch -r --no-color | cut -d" " -f 3 | cut -d"/" -f 2 \
+				| grep -v "^master$" | grep -v "^HEAD$" \
+				| sort | while read branch; do
+					echo "branch $branch"
+				done
+			done
+		)
+
+		# loading tickets info from trac
+		tickets=$(echo "$report" | grep ^branch | egrep -o "[0-9]+")
+		ticket_info=""
+		[ "$tickets" ] && ticket_info=$($JW_TRAC_CMD times $tickets)
+
+		echo "$report" | while read line; do
+			type=$(echo "$line" | cut -d' ' -f1)
+			item=$(echo "$line" | cut -d' ' -f2)
+			case "$type" in
+				"project")
+					echo
+					echo "$item"
+					;;
+				"branch")
+					color="red"
+					ticket=$(guess_ticket "$item")
+					if [ "$ticket" ]
+					then
+						color="yellow"
+						trac_line=$(echo "$ticket_info" | grep "^$ticket " | head -n1)
+						if [ "$trac_line" ]
+						then
+							# ticket changed reviewed pushed merged
+							time_review=$(echo "$trac_line" | cut -d' ' -f3)
+							time_push=$(echo "$trac_line" | cut -d' ' -f4)
+							if [ "$time_review" -gt "$time_push" ]
+							then
+								color="green"
+							fi
+						fi
+					fi
+					echo -e "  \033[$(jw-colorpicker $color)m$item\033[0m"
+					;;
+			esac
+		done
+		echo
 		;;
 	ta)
 		ticket=$(current_ticket "$1")

@@ -12,12 +12,11 @@ JW_SETTINGS_FILE="$HOME/.jw-settings"
 # if empty, the trac functionality in gh and other scripts would be disabled
 JW_TRAC_CMD=""
 
-JW_RW_CMD="jw-code-reviewer"
-
 JW_CONFIRM_CMD="jw-confirm"
 
 JW_COLORPICKER_CMD="jw-colorpicker"
 
+JW_REVIEWABLE_PROJECTS=""
 
 #
 ## end
