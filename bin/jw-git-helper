@@ -57,8 +57,8 @@ Working with repositories as a lead programmer:
 
        gh w
 
-    It will show all development branches with review status
-    next to them.
+    It will show all development branches with review status in colour:
+    red = no review, yellow = changed after review, green = reviewed.
 
  2. If you want to examine a branch, grab it:
 
@@ -171,23 +171,6 @@ wait_for_git_lock() {
 	fi
 }
 
-get_commit_message() { # message from script args
-	[ "$1" ] && echo "$1" && return 0
-	# okay, let's show him the editor
-	tmpf=`mktemp`
-	echo -e "\n\n=-=-=-=-=-=-=-=-=-=-=-=-=-=\n" >>"$tmpf"
-	git status >>"$tmpf"
-	cat "$tmpf" >&2
-	nano -ti "$tmpf"
-	rm "$tmpf"
-	crap "You must specify commit message"
-}
-
-open_an_editor()
-{
-	nano -ti "$tmpf"
-}
-
 # die if no args
 [ $# = 0 ] && usage && exit 0
 
@@ -231,15 +214,23 @@ case "$cmd" in
 		;;
 	m)
 		wait_for_git_lock
-		msg=$(get_commit_message "$1")
-		git commit -m "$msg"
+		if [ "$1" ]
+		then
+			git commit -m "$1"
+		else
+			git commit -e
+		fi
 		propose_push $(current_branch)
 		;;
 	am)
 		wait_for_git_lock
 		git add -Av .
-		msg=$(get_commit_message "$1")
-		git commit -m "$msg"
+		if [ "$1" ]
+		then
+			git commit -m "$1"
+		else
+			git commit -e
+		fi
 		propose_push $(current_branch)
 		;;
 	r)
@@ -429,25 +420,32 @@ case "$cmd" in
 			item=$(echo "$line" | cut -d' ' -f2)
 			case "$type" in
 				"project")
-					echo
-					echo "$item"
+					project="$item"
 					;;
 				"branch")
-					color="red"
+					if [ "$project" ]
+					then
+						echo
+						echo "$project"
+						project=""
+					fi
+
+					color="blue"
 					ticket=$(guess_ticket "$item")
 					if [ "$ticket" ]
 					then
-						color="yellow"
+						color="red"
 						trac_line=$(echo "$ticket_info" | grep "^$ticket " | head -n1)
 						if [ "$trac_line" ]
 						then
 							# ticket changed reviewed pushed merged
 							time_review=$(echo "$trac_line" | cut -d' ' -f3)
 							time_push=$(echo "$trac_line" | cut -d' ' -f4)
-							if [ "$time_review" -gt "$time_push" ]
-							then
-								color="green"
-							fi
+							# no review = red
+							# there is a review and it's older than push = yellow
+							[ "$time_review" ] && [ "$time_review" -lt "$time_push" ] && color="yellow"
+							# review greater than push = green
+							[ "$time_review" -gt "$time_push" ] && color="green"
 						fi
 					fi
 					echo -e "  \033[$(jw-colorpicker $color)m$item\033[0m"
