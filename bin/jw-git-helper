@@ -443,7 +443,7 @@ case "$cmd" in
 							time_push=$(echo "$trac_line" | cut -d' ' -f4)
 							# no review = red
 							# there is a review and it's older than push = yellow
-							[ "$time_review" ] && [ "$time_review" -lt "$time_push" ] && color="yellow"
+							[ "$time_review" -gt "0" ] && [ "$time_review" -lt "$time_push" ] && color="yellow"
 							# review greater than push = green
 							[ "$time_review" -gt "$time_push" ] && color="green"
 						fi
