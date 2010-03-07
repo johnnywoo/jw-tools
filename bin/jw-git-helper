@@ -46,7 +46,7 @@ Trac:
 EOF
 }
 
-help()
+show_help()
 {
 usage
 cat << EOF
@@ -81,7 +81,7 @@ Working with repositories as a lead programmer:
 
  4. Use your IDE and merge tools to examine the changes.
 
- 5. If you don't want to accept the branch, you can edit ticket description
+ 5. If you do not want to accept the branch, you can edit ticket description
     to tell its owner what is wrong:
 
        gh te
@@ -136,11 +136,11 @@ current_ticket() { # [ticket id or branch name]
 }
 
 current_project_root() {
-	x=`pwd`
+	x=$(pwd)
 	while [ "$x" != "/" ]
 	do
 		[ -d "$x/.git" ] && echo "$x" && return
-		x=`dirname "$x"`
+		x=$(dirname "$x")
 	done
 	crap "Not in a git repository"
 }
@@ -179,7 +179,7 @@ shift 1
 
 case "$cmd" in
 	help)
-		help
+		show_help
 		;;
 	s)
 		wait_for_git_lock
@@ -277,7 +277,7 @@ case "$cmd" in
 		branch="$1"
 		[ -z "$branch" ] && branch=$(current_branch)
 		[ "$branch" == 'master' ] && crap "Cannot grab master"
-		[ -z `git branch -r | grep "origin/$branch"` ] && crap "No branch $branch in origin"
+		[ -z "$(git branch -r | grep "origin/$branch")" ] && crap "No branch $branch in origin"
 		# going to master so we can delete current branch
 		git checkout master
 		# try to delete the branch;
@@ -345,8 +345,8 @@ case "$cmd" in
 	te)
 		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
 		ticket=$(current_ticket "$1")
-		tmpf=`mktemp`
-		tmpf2=`mktemp`
+		tmpf=$(mktemp)
+		tmpf2=$(mktemp)
 		$JW_TRAC_CMD get "$ticket" > $tmpf
 		cp $tmpf $tmpf2
 		# counting lines to put cursor at the last one in editor
@@ -363,7 +363,8 @@ case "$cmd" in
 			then
 				# touching branch code review
 				echo
-				$JW_CONFIRM_CMD "Do you want to mark review complete for $project/$branch?" && $JW_TRAC_CMD mark-review "$ticket"
+				$JW_CONFIRM_CMD "Do you want to mark review complete for $branch?" \
+ 					&& $JW_TRAC_CMD mark-review "$ticket"
 
 				# reverting ticket back to its owner
 				author=$(guess_author "$branch")
@@ -382,16 +383,19 @@ case "$cmd" in
 		rm $tmpf $tmpf2
 		;;
 	fix)
+		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
 		ticket=$(current_ticket "$1")
 		echo "Closing ticket $ticket"
 		echo " " | $JW_TRAC_CMD save "$ticket" status:closed resolution:fixed
 		;;
 	rw)
+		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
 		ticket=$(current_ticket "$1")
 		echo "Marking ticket $ticket as reviewed"
 		$JW_TRAC_CMD mark-review "$ticket"
 		;;
 	w)
+		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
 		[ -z "$JW_REVIEWABLE_PROJECTS" ] && crap "No repos configured for reviewing"
 
 		# accumulating report
@@ -402,9 +406,10 @@ case "$cmd" in
 				echo "project $project"
 
 				# need the sort so grep would not cause exit
-				git branch -r --no-color | cut -d" " -f 3 | cut -d"/" -f 2 \
-				| grep -v "^master$" | grep -v "^HEAD$" \
-				| sort | while read branch; do
+				git branch -r --no-color | \
+ 				cut -d" " -f 3 | cut -d"/" -f 2 | \
+ 				grep -v '^master$' | grep -v '^HEAD$' | \
+ 				sort | while read branch; do
 					echo "branch $branch"
 				done
 			done
@@ -448,13 +453,14 @@ case "$cmd" in
 							[ "$time_review" -gt "$time_push" ] && color="green"
 						fi
 					fi
-					echo -e "  \033[$(jw-colorpicker $color)m$item\033[0m"
+					echo "  $(jw-paint $color "$item")"
 					;;
 			esac
 		done
 		echo
 		;;
 	ta)
+		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
 		ticket=$(current_ticket "$1")
 		author=$(guess_author)
 		$JW_TRAC_CMD view "$ticket" | head -n 2

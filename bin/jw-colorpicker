@@ -1,31 +1,7 @@
 #!/bin/bash
 
-choose_color()
-{
-	if [ -z "$1" ]
-	then
-		echo -ne "\033[m 1.\033[31m red  "
-		echo -ne "\033[m 3.\033[32m green "
-		echo -ne "\033[m 5.\033[33m yellow  "
-		echo -ne "\033[m7.\033[34m blue"
-		echo
-		echo -ne "\033[m 2.\033[35m pink "
-		echo -ne "\033[m 4.\033[36m cyan  "
-		echo -ne "\033[m 6.\033[37m gray    "
-		echo -ne "\033[m8.\033[m white"
-		echo
-	fi
-
-	if [ -z "$1" -o "$1" == "ask-without-header" ]
-	then
-		read x
-		verb="yes"
-	else
-		x="$1"
-		verb=""
-	fi
-
-	case "$x" in
+choose_color() {
+	case "$1" in
 		1|r|red)    color="31";;
 		2|p|pink)   color="35";;
 		3|g|green)  color="32";;
@@ -34,18 +10,49 @@ choose_color()
 		6|gr|gray)  color="37";;
 		7|b|blue)   color="34";;
 		8|w|white)  color="0";;
-		*)
-			if [ "$verb" ]
-			then
-				echo "I need a color, man"
-				choose_color ask-without-header
-				return
-			else
-				exit 1
-			fi
-			;;
+		*)          color="";;
 	esac
 	echo "$color"
 }
 
-choose_color "$1"
+interact()
+{
+	read x
+	color=$(choose_color "$x")
+	if [ -z "$color" ]
+	then
+		echo "I need a color, man!" >&2
+		interact
+	else
+		echo "$color"
+	fi
+}
+
+out_prefix=""
+out_suffix=""
+if [ "$1" == "-e" ]
+then
+	shift 1
+	out_prefix="\033["
+	out_suffix="m"
+fi
+
+if [ -z "$1" ]
+then
+	echo -ne "\033[m 1.\033[31m red  "
+	echo -ne "\033[m 3.\033[32m green "
+	echo -ne "\033[m 5.\033[33m yellow  "
+	echo -ne "\033[m7.\033[34m blue"
+	echo
+	echo -ne "\033[m 2.\033[35m pink "
+	echo -ne "\033[m 4.\033[36m cyan  "
+	echo -ne "\033[m 6.\033[37m gray    "
+	echo -ne "\033[m8.\033[m white"
+	echo
+
+	interact
+else
+	color=$(choose_color "$1")
+	[ -z "$color" ] && exit 1
+	echo "${out_prefix}${color}${out_suffix}"
+fi
