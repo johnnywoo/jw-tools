@@ -205,42 +205,26 @@ case "$cmd" in
 
 	a)
 		wait_for_git_lock
-		if [ $# = 0 ]
-		then
-			git add -Av .
-		else
-			git add -Av "$@"
-		fi
+		[ $# = 0 ] \
+ 			&& git add -Av . \
+			|| git add -Av "$@"
 		;;
 	m)
 		wait_for_git_lock
-		if [ "$1" ]
-		then
-			git commit -m "$1"
-		else
-			git commit -e
-		fi
+		[ "$1" ] \
+ 			&& git commit -m "$1" \
+ 			|| git commit -e
 		propose_push $(current_branch)
 		;;
 	am)
-		wait_for_git_lock
-		git add -Av .
-		if [ "$1" ]
-		then
-			git commit -m "$1"
-		else
-			git commit -e
-		fi
-		propose_push $(current_branch)
+		jw-git-helper a
+		jw-git-helper m "$@"
 		;;
 	r)
 		wait_for_git_lock
-		if [ $# = 0 ]
-		then
-			git checkout -- .
-		else
-			git checkout -- "$@"
-		fi
+		[ $# = 0 ] \
+			&& git checkout -- . \
+			|| git checkout -- "$@"
 		;;
 	p)
 		wait_for_git_lock
