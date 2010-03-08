@@ -4,77 +4,91 @@
 
 function get_config($args)
 {
-	$cmd = 'php '.$args.' -r '.escapeshellarg('echo base64_encode(serialize(ini_get_all(null, false)));');
+	$cmd = 'php '.$args.' -r '.escapeshellarg(
+		'$x = get_loaded_extensions(); $x[] = null; $s = array(); ' .
+		'foreach($x as $name) foreach(ini_get_all($name, false) as $k=>$v) $s[$k] = $v; ' .
+		'echo base64_encode(serialize($s));'
+	);
 	$x = exec($cmd, $out, $err);
 	if($err) die('error in cmd: '.$cmd."\n");
 
 	return unserialize(base64_decode($x));
 }
 
-array_shift($argv); // removing script filename
-
-$verbose = false;
-if($argv[0] == '-v')
+function fix_value($v, $definition)
 {
-	$verbose = true;
-	array_shift($argv);
+	$def = strtolower(trim($definition));
+	if($def == 'on' || $def == 'off')
+	{
+		return $v ? 'On' : 'Off';
+	}
+	return $v;
 }
 
+
+$ignored_lines = array_filter(explode("\n", "
+
+engine = On
+unserialize_callback_func =
+safe_mode_include_dir =
+auto_prepend_file =
+auto_append_file =
+doc_root =
+user_dir =
+
+"));
+
+
+array_shift($argv); // removing script filename
+
 $fname = $argv[0];
-if($verbose) echo "Analyzing $fname\n";
 
 $orig_config = get_config('-n');
 $config = get_config('-c '.escapeshellarg($fname));
 
-$diff_keys = array_keys(array_diff_assoc($orig_config, $config));
-// another round for them bools
-foreach($diff_keys as $k=>$name)
-{
-	if($orig_config[$name] == '0' && !strlen($config[$name]))
-	{
-		unset($diff_keys[$k]);
-	}
-}
-
-if($verbose)
-{
-	if(empty($diff_keys))
-	{
-		echo "\nConfigs are identical\n";
-		exit;
-	}
-	else
-	{
-		echo "\nDirective => Given file => Default\n";
-		foreach($diff_keys as $name)
-		{
-			echo "$name => ".$config[$name].' => '.$orig_config[$name]."\n";
-		}
-
-		echo "\nCleaned config file:\n";
-	}
-}
-
+$n_comments = 0;
+$n_ignored  = 0;
 $section = '';
-$section_out = false;
 foreach(file($fname) as $line)
 {
-	if($line[0] == '[')
+	$line = trim($line);
+	if($line == '' || substr($line, 0, 1) == ';')
 	{
-		$section = $line;
-		$section_out = false;
+		$n_comments++;
 		continue;
 	}
-	// ignoring comments and empty lines
-	if(!preg_match('/^\s*([^\s;]+)\s*=/', $line, $m)) continue;
-	$name = $m[1];
-	// ignoring non-change lines
-	if(!in_array($name, $diff_keys)) continue;
 
-	if(!$section_out)
+	if(substr($line, 0, 1) == '[')
 	{
-		echo "\n".$section;
-		$section_out = true;
+		$section = $line;
+		continue;
 	}
-	echo $line;
+
+	if(in_array($line, $ignored_lines))
+	{
+		$n_ignored++;
+		continue;
+	}
+
+	$cmt = '';
+	if(preg_match('/^([^=\s]+)\s*=(.*)$/', $line, $m))
+	{
+		$key = $m[1];
+		if(isset($config[$key]) && isset($orig_config[$key]))
+		{
+			$v  = fix_value($config[$key], $m[2]);
+			$vo = fix_value($orig_config[$key], $m[2]);
+			if($v == $vo) continue;
+			$cmt = "; orig '$vo'";
+		}
+	}
+
+	if($section != '')
+	{
+		echo "\n";
+		echo $section."\n";
+		$section = '';
+	}
+	if($cmt) echo $cmt."\n";
+	echo $line."\n";
 }
