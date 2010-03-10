@@ -6,6 +6,8 @@ set -e
 # loading variables with settings
 source jw-settings
 
+SELF="jw-git-helper"
+
 usage()
 {
 cat << EOF
@@ -103,6 +105,11 @@ Working with repositories as a lead programmer:
 EOF
 }
 
+
+# die if no args
+[ $# = 0 ] && usage && exit 1
+
+
 # exits with an error message
 crap() { # error message
 	[ "$1" ] && echo "$1" >&2
@@ -145,10 +152,6 @@ current_project_root() {
 	crap "Not in a git repository"
 }
 
-current_project() {
-	basename "$(current_project_root)"
-}
-
 propose_push() { # branch name
 	if [ "$1" ] && $JW_CONFIRM_CMD -n "Do you want to push $1 to origin?"
 	then
@@ -171,8 +174,10 @@ wait_for_git_lock() {
 	fi
 }
 
-# die if no args
-[ $# = 0 ] && usage && exit 0
+assign_ticket() { # ticket author
+	echo "About to save ticket $1"
+	echo " " | $JW_TRAC_CMD save "$1" owner:$2
+}
 
 cmd="$1"
 shift 1
@@ -217,8 +222,8 @@ case "$cmd" in
 		propose_push $(current_branch)
 		;;
 	am)
-		jw-git-helper a
-		jw-git-helper m "$@"
+		$SELF a
+		$SELF m "$@"
 		;;
 	r)
 		wait_for_git_lock
@@ -348,7 +353,7 @@ case "$cmd" in
 				# touching branch code review
 				echo
 				$JW_CONFIRM_CMD "Do you want to mark review complete for $branch?" \
- 					&& $JW_TRAC_CMD mark-review "$ticket"
+ 					&& $SELF rw "$ticket"
 
 				# reverting ticket back to its owner
 				author=$(guess_author "$branch")
@@ -358,8 +363,7 @@ case "$cmd" in
 					$JW_TRAC_CMD view "$ticket" | head -n 2
 					if $JW_CONFIRM_CMD "Do you want to assign this ticket to $author?"
 					then
-						echo "About to save ticket $ticket"
-						echo " " | $JW_TRAC_CMD save "$ticket" owner:$author
+						assign_ticket "$ticket" "$author"
 					fi
 				fi
 			fi
@@ -448,13 +452,12 @@ case "$cmd" in
 		ticket=$(current_ticket "$1")
 		author=$(guess_author)
 		$JW_TRAC_CMD view "$ticket" | head -n 2
-		$JW_CONFIRM_CMD "Do you want to assign this ticket to $author?" || exit
-		echo "About to save ticket $ticket"
-		echo " " | $JW_TRAC_CMD save "$ticket" owner:$author
+		$JW_CONFIRM_CMD "Do you want to assign this ticket to $author?" || exit 1
+		assign_ticket "$ticket" "$author"
 		;;
 	*)
 		echo "Unrecognized command: $cmd" >&2
-		$JW_CONFIRM_CMD "Do you want to run that with git?" || exit 0
+		$JW_CONFIRM_CMD "Do you want to run that with git?" || exit 1
 		git "$cmd" "$@"
 		;;
 esac
