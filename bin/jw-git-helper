@@ -29,6 +29,7 @@ Committing:
   m       git commit
   am      Commit all local changes.
   p       Push current branch to origin.
+  fp      Push current branch to origin (with --force).
 Branches:
   b       Switch to a branch, creates it if necessary.
   bm      Switch to master branch.
@@ -235,6 +236,12 @@ case "$cmd" in
 		wait_for_git_lock
 		branch=$(current_branch)
 		git push origin "$branch"
+		;;
+	fp)
+		wait_for_git_lock
+		branch=$(current_branch)
+		$JW_CONFIRM_CMD "Do you really want to force push? Can't be good, you know." || exit 1
+		git push --force origin "$branch"
 		;;
 	u)
 		wait_for_git_lock
