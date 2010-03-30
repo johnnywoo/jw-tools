@@ -211,15 +211,21 @@ case "$cmd" in
 
 	a)
 		wait_for_git_lock
-		[ $# = 0 ] \
- 			&& git add -Av . \
-			|| git add -Av "$@"
+		if [ $# = 0 ]
+		then
+ 			git add -Av .
+ 		else
+			git add -Av "$@"
+		fi
 		;;
 	m)
 		wait_for_git_lock
-		[ "$1" ] \
- 			&& git commit -m "$1" \
- 			|| git commit -e
+		if [ "$1" ]
+		then
+ 			git commit -m "$1"
+ 		else
+ 			git commit -e
+ 		fi
 		propose_push $(current_branch)
 		;;
 	am)
