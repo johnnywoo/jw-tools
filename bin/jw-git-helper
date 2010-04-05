@@ -175,6 +175,10 @@ wait_for_git_lock() {
 	fi
 }
 
+require_trac() {
+	[ "$JW_TRAC_CMD" ] || crap "No trac command specified, see jw-settings"
+}
+
 assign_ticket() { # ticket author
 	echo "About to save ticket $1"
 	echo " " | $JW_TRAC_CMD save "$1" owner:$2
@@ -234,9 +238,12 @@ case "$cmd" in
 		;;
 	r)
 		wait_for_git_lock
-		[ $# = 0 ] \
-			&& git checkout -- . \
-			|| git checkout -- "$@"
+		if [ $# = 0 ]
+		then
+			git checkout -- .
+		else
+			git checkout -- "$@"
+		fi
 		;;
 	p)
 		wait_for_git_lock
@@ -266,7 +273,7 @@ case "$cmd" in
 		wait_for_git_lock
 		[ -z "$1" ] && crap "You must specify the branch"
 		needcreate=""
-		git branch | grep "$1" >/dev/null || needcreate="-b"
+		git branch --no-color | grep "$1" >/dev/null || needcreate="-b"
 		git checkout $needcreate "$1"
 		;;
 	bm)
@@ -340,12 +347,12 @@ case "$cmd" in
 		;;
 
 	t)
-		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
+		require_trac
 		ticket=$(current_ticket "$1")
 		$JW_TRAC_CMD view "$ticket"
 		;;
 	te)
-		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
+		require_trac
 		ticket=$(current_ticket "$1")
 		tmpf=$(mktemp)
 		tmpf2=$(mktemp)
@@ -384,19 +391,19 @@ case "$cmd" in
 		rm $tmpf $tmpf2
 		;;
 	fix)
-		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
+		require_trac
 		ticket=$(current_ticket "$1")
 		echo "Closing ticket $ticket"
 		echo " " | $JW_TRAC_CMD save "$ticket" status:closed resolution:fixed
 		;;
 	rw)
-		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
+		require_trac
 		ticket=$(current_ticket "$1")
 		echo "Marking ticket $ticket as reviewed"
 		$JW_TRAC_CMD mark-review "$ticket"
 		;;
 	w)
-		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
+		require_trac
 		[ -z "$JW_REVIEWABLE_PROJECTS" ] && crap "No repos configured for reviewing"
 
 		# accumulating report
@@ -461,7 +468,7 @@ case "$cmd" in
 		echo
 		;;
 	ta)
-		[ -z "$JW_TRAC_CMD" ] && crap "No trac command specified, see jw-settings"
+		require_trac
 		ticket=$(current_ticket "$1")
 		author=$(guess_author)
 		$JW_TRAC_CMD view "$ticket" | head -n 2
