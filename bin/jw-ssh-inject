@@ -2,12 +2,13 @@
 
 key=$(cat ~/.ssh/id_rsa.pub)
 
-[ -z "$1" ] && echo "usage: "$(basename "$0")" user@host" && exit
+[ -z "$1" ] && echo "usage: $(basename "$0") user@host" && exit
 
 # enable passwordless interaction with keys
+# yes, I know about ssh-copy-id, but we don't have it in Mac OS
 
 echo "Installing public key to $1..."
-key_itself=$(cat "$key" | head -n 1 | cut -d" " -f 2)
+key_itself=$(echo "$key" | head -n 1 | cut -d" " -f 2)
 # 1. if there is no .ssh, run the keygen
 # 2. if there is no authorized_keys, create one with correct perms
 # 3. if our key is not there, append it
