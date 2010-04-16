@@ -18,6 +18,7 @@ Information:
   l       List of all branches. Auto-updates remote list.
   i       Show changes in current branch since master.
   dl      Show diff for last commit in the branch.
+  stm     diff --status
   help    An instruction on using this tool.
 Working:
   u       git pull
@@ -211,6 +212,12 @@ case "$cmd" in
 	dl)
 		wait_for_git_lock
 		git diff HEAD^..HEAD
+		;;
+	stm)
+		wait_for_git_lock
+		arg="$1"
+		[ -z "$arg" ] && arg="master.."
+		git diff --stat "$arg"
 		;;
 
 	a)
