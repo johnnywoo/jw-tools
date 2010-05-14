@@ -440,7 +440,7 @@ case "$cmd" in
 		# loading tickets info from trac
 		tickets=$(echo "$report" | grep ^branch | egrep -o "[0-9]+")
 		ticket_info=""
-		[ "$tickets" ] && ticket_info=$($JW_TRAC_CMD times $tickets)
+		[ "$tickets" ] && ticket_info=$($JW_TRAC_CMD status-info $tickets)
 
 		echo "$report" | while read line; do
 			type=$(echo "$line" | cut -d' ' -f1)
@@ -457,25 +457,28 @@ case "$cmd" in
 						project=""
 					fi
 
-					color="blue"
+					color="white"
+					descr=""
+					suffix=""
 					ticket=$(guess_ticket "$item")
 					if [ "$ticket" ]
 					then
-						color="red"
 						trac_line=$(echo "$ticket_info" | grep "^$ticket " | head -n1)
 						if [ "$trac_line" ]
 						then
 							# ticket changed reviewed pushed merged
-							time_review=$(echo "$trac_line" | cut -d' ' -f3)
-							time_push=$(echo "$trac_line" | cut -d' ' -f4)
-							# no review = red
-							# there is a review and it's older than push = yellow
-							[ "$time_review" -gt "0" ] && [ "$time_review" -lt "$time_push" ] && item="$item (fix)"
-							# review greater than push = green
-							[ "$time_review" -gt "$time_push" ] && color="green"
+							tstatus=$(echo "$trac_line" | cut -d' ' -f2)
+							towner=$(echo "$trac_line" | cut -d' ' -f3)
+							color="yellow"
+							descr=" "
+							[ "$tstatus" = "pushed" ] && color="blue" && descr="P"
+							[ "$tstatus" = "reviewed" ] && color="red" && descr="R"
+							[ "$tstatus" = "validated" ] && color="green" && descr="V"
+
+							[ "$towner" != "$(guess_author $item)" ] && suffix=" (reviewer $towner)"
 						fi
 					fi
-					echo "  $(jw-paint $color "$item")"
+					echo "$(jw-paint $color " $descr $item$suffix")"
 					;;
 			esac
 		done
