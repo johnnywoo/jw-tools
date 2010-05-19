@@ -256,7 +256,7 @@ case "$cmd" in
 		else
 			git status
 			echo
-			$JW_CONFIRM_CMD "Something is already staged, are you sure you want to stage everything else?" || do_the_adding=""
+			$JW_CONFIRM_CMD -n "Something is already staged, are you sure you want to stage everything else?" || do_the_adding=""
 		fi
 		[ "$do_the_adding" ] && $SELF a
 		$SELF m "$@"
