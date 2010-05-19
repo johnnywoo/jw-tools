@@ -247,7 +247,18 @@ case "$cmd" in
 		propose_push $(current_branch)
 		;;
 	am)
-		$SELF a
+		wait_for_git_lock
+		do_the_adding="yes"
+		# --quiet removes output and also turns on correct exit codes
+		if git diff --staged --quiet
+		then
+			true
+		else
+			git status
+			echo
+			$JW_CONFIRM_CMD "Something is already staged, are you sure you want to stage everything else?" || do_the_adding=""
+		fi
+		[ "$do_the_adding" ] && $SELF a
 		$SELF m "$@"
 		;;
 	r)
