@@ -20,6 +20,7 @@ Information:
   dl      Show diff for last commit in the branch.
   stm     diff --stat, with master by default
   dtm     diff, with master by default
+  ltm     log, with master by default
   help    An instruction on using this tool.
 Working:
   u       git pull
@@ -225,6 +226,12 @@ case "$cmd" in
 		arg="$1"
 		[ -z "$arg" ] && arg="master.."
 		git diff "$arg"
+		;;
+	ltm)
+		wait_for_git_lock
+		arg="$1"
+		[ -z "$arg" ] && arg="master.."
+		git log "$arg"
 		;;
 
 	a)
