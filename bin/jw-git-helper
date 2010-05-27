@@ -359,7 +359,7 @@ case "$cmd" in
 		git push origin master
 		echo
 		echo "== Removing local branch $branch"
-		git branch -d "$branch"
+		git branch -D "$branch"
 		if git branch -r | grep "origin/$branch" >/dev/null
 		then
 			echo
