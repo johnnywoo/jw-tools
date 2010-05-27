@@ -215,19 +215,19 @@ case "$cmd" in
 		wait_for_git_lock
 		git diff HEAD^..HEAD
 		;;
-	stm)
+	sm|stm)
 		wait_for_git_lock
 		arg="$1"
 		[ -z "$arg" ] && arg="master.."
 		git diff --stat "$arg"
 		;;
-	dtm)
+	dm|dtm)
 		wait_for_git_lock
 		arg="$1"
 		[ -z "$arg" ] && arg="master.."
 		git diff "$arg"
 		;;
-	ltm)
+	lm|ltm)
 		wait_for_git_lock
 		arg="$1"
 		[ -z "$arg" ] && arg="master.."
@@ -273,8 +273,10 @@ case "$cmd" in
 		if [ $# = 0 ]
 		then
 			git checkout -- .
+			git clean -f .
 		else
 			git checkout -- "$@"
+			git clean -f -- "$@"
 		fi
 		;;
 	p)
