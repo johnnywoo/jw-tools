@@ -410,16 +410,16 @@ case "$cmd" in
  					&& $SELF rw "$ticket"
 
 				# reverting ticket back to its owner
-				author=$(guess_author "$branch")
-				if head -n 1 "$tmpf" | grep -v "$author" >/dev/null
-				then
-					echo
-					$JW_TRAC_CMD view "$ticket" | head -n 2
-					if $JW_CONFIRM_CMD "Do you want to assign this ticket to $author?"
-					then
-						assign_ticket "$ticket" "$author"
-					fi
-				fi
+				#author=$(guess_author "$branch")
+				#if head -n 1 "$tmpf" | grep -v "$author" >/dev/null
+				#then
+				#	echo
+				#	$JW_TRAC_CMD view "$ticket" | head -n 2
+				#	if $JW_CONFIRM_CMD "Do you want to assign this ticket to $author?"
+				#	then
+				#		assign_ticket "$ticket" "$author"
+				#	fi
+				#fi
 			fi
 		fi
 		rm $tmpf $tmpf2
@@ -478,7 +478,7 @@ case "$cmd" in
 					fi
 
 					color="white"
-					descr=""
+					descr=" "
 					suffix=""
 					ticket=$(guess_ticket "$item")
 					if [ "$ticket" ]
@@ -490,12 +490,9 @@ case "$cmd" in
 							tstatus=$(echo "$trac_line" | cut -d' ' -f2)
 							towner=$(echo "$trac_line" | cut -d' ' -f3)
 							color="yellow"
-							descr=" "
-							[ "$tstatus" = "pushed" ] && color="blue" && descr="P"
+							[ "$tstatus" = "pushed" ] && color="blue" && descr="P" && suffix=" (reviewer $towner)"
 							[ "$tstatus" = "reviewed" ] && color="red" && descr="R"
 							[ "$tstatus" = "validated" ] && color="green" && descr="V"
-
-							[ "$towner" != "$(guess_author $item)" ] && suffix=" (reviewer $towner)"
 						fi
 					fi
 					echo "$(jw-paint $color " $descr $item$suffix")"
