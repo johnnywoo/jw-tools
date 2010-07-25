@@ -1,0 +1,82 @@
+#!/usr/local/php/bin/php
+<?
+
+function usage()
+{
+	echo 'Usage: '.basename(__FILE__)." [-n | --no-create] target_path [lib_path]\n";
+	echo "\n";
+	echo "Organize cuts php classes out of a php file into autoload-friendly\n";
+	echo "file/directory structure, so you do not have to bother making all\n";
+	echo "those files by hand.\n";
+	echo "\n";
+	echo "If target_path is a directory, organize processes all .php files in it.\n";
+	echo "target_path may also contain wildcards.\n";
+	echo "\n";
+	echo "If lib_path is not supplied, organize searches for a directory named\n";
+	echo "'lib' in target path and all its parents.\n";
+	die;
+}
+
+$args = $argv;
+array_shift($args); // removing script name
+
+if(!isset($args[0]))
+	usage();
+
+$is_harmless = false;
+if($args[0] == '-n' || $args[0] == '--no-create')
+{
+	$is_harmless = true;
+	array_shift($args);
+}
+
+if(!isset($args[0]))
+	usage();
+
+$path = $args[0];
+$lib_path = isset($args[1]) ? $args[1] : find_lib_path($path);
+if(!$lib_path || !is_dir($lib_path))
+	die("lib_path not found\n");
+
+$files = is_file($path) ? array($path) : glob($path.'/{*,*/*,*/*/*,*/*/*/*}.php', GLOB_BRACE);
+foreach($files as $file)
+{
+	echo "$file\n";
+	$contents = file_get_contents($file);
+	if(preg_match_all('#(?<=\n)((?:class|interface) (\S+)).*?\n\}(\n|$)#is', $contents, $mm, PREG_SET_ORDER))
+	{
+		foreach($mm as $m)
+		{
+			echo "   ".$m[1]."\n";
+			$name = $m[2];
+			$body = $m[0];
+
+			if(!$is_harmless)
+			{
+				$path = $lib_path . '/' . str_replace('_', '/', $name) . '.php';
+				$dir = dirname($path);
+				if(!file_exists($dir)) mkdir($dir, 0777, true);
+				file_put_contents($path, "<?\n\n".$body);
+				$contents = str_replace($body, '', $contents);
+			}
+		}
+	}
+	if(!$is_harmless)
+		file_put_contents($file, $contents);
+}
+
+
+function find_lib_path($dir)
+{
+	while($dir != '/')
+	{
+		if(is_dir($dir.'/lib'))
+		{
+			$path = $dir.'/lib';
+			echo 'Found lib_path at '.realpath($path)."\n";
+			return $path;
+		}
+		$dir = dirname($dir);
+	}
+	return false;
+}
