@@ -43,7 +43,7 @@ foreach($files as $file)
 {
 	echo "$file\n";
 	$contents = file_get_contents($file);
-	if(preg_match_all('#(?<=\n)((?:class|interface) (\S+)).*?\n\}(\n|$)#is', $contents, $mm, PREG_SET_ORDER))
+	if(preg_match_all('#(?<=\n)((?:(?:(?:abstract|final)\s+)*class|interface) (\S+)).*?\n\}(\n|$)#is', $contents, $mm, PREG_SET_ORDER))
 	{
 		foreach($mm as $m)
 		{
