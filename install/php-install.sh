@@ -1,10 +1,14 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.3.1"
+PHP_VERSION="5.3.3"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/source"
 APACHE_FOLDER="/usr/local/apache2"
+
+[ "$1" ] && PHP_VERSION="$1"
+
+echo "Installing PHP $PHP_VERSION"
 
 # we will need root privs
 if ! sudo whoami >/dev/null 2>&1
@@ -26,10 +30,10 @@ cd "$SOURCE_FOLDER"
 	|| wget "http://ru2.php.net/get/php-$PHP_VERSION.tar.bz2/from/this/mirror"
 
 # removing prev sources
-echo "Removing previous sources, if any"
+echo "Removing previous sources of $PHP_VERSION, if any"
 rm -rf "$SOURCE_FOLDER/php-$PHP_VERSION"
 
-echo "Removing previous installation, if any"
+echo "Removing previous installation of $PHP_VERSION, if any"
 rm -rf "~/.pearrc.5.3"
 sudo rm -rf "/usr/local/php-$PHP_VERSION"
 [ "$APACHE_FOLDER" ] && sudo rm -rf "$APACHE_FOLDER/modules/libphp5-$PHP_VERSION.so"
@@ -44,9 +48,9 @@ echo "Configuring"
 apxs_arg="--with-apxs2=$APACHE_FOLDER/bin/apxs"
 [ -z "$APACHE_FOLDER" ] && apxs_arg=""
 
-#export CFLAGS=" -O9 -pipe "
-#export CPPFLAGS=" -O9 -pipe "
-#export CXXFLAGS=" -O9 -pipe "
+export CFLAGS=" -O9 -pipe "
+export CPPFLAGS=" -O9 -pipe "
+export CXXFLAGS=" -O9 -pipe "
 ./configure \
 --prefix=/usr/local/php-$PHP_VERSION \
 $apxs_arg \
@@ -91,6 +95,14 @@ fi
 
 cd ..
 
+# copying php.ini
+n=$(ls -1 "$INSTALL_BASE/php/lib/php.ini" 2>/dev/null | wc -l)
+if [ "$n" != "0" ]
+then
+	echo "Copying php.ini from current installation"
+	sudo cp -P "$INSTALL_BASE/php/lib/php.ini" "$INSTALL_BASE/php-$PHP_VERSION/lib"
+fi
+
 [ -e "$INSTALL_BASE/php" ] && sudo rm "$INSTALL_BASE/php"
 sudo ln -s "$INSTALL_BASE/php-$PHP_VERSION" "$INSTALL_BASE/php"
 
@@ -112,7 +124,7 @@ sudo pear install -al Text_Diff
 echo
 echo "Installing APC"
 export PATH="$PATH:$APACHE_FOLDER/bin"
-sudo $INSTALL_BASE/php/bin/pecl install apc > apc.install.output
+sudo $INSTALL_BASE/php/bin/pecl install apc
 
 echo
 echo "Installing XDebug"
