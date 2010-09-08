@@ -33,10 +33,13 @@ Committing:
   am      Commit all local changes.
   p       Push current branch to origin.
   fp      Push current branch to origin (with --force).
+  mr [-n] Rename migrations from timestamps to ordered numbers
+          (-n is no rename without committing)
 Branches:
   b       Switch to a branch, creates it if necessary.
   bm      Switch to master branch.
-  g       Create a local branch from the remote one, then rebase.
+  g [-n]  Create a local branch from the remote one, then rebase.
+          (-n is to skip the rebase part)
           Will overwrite local branch completely.
 Manipulation:
   rd      Deletes a remote branch.
@@ -322,6 +325,12 @@ case "$cmd" in
 	g|grab)
 		wait_for_git_lock
 		git remote update > /dev/null
+		norebase=""
+		if [ "$1" = "-n" ]
+		then
+			norebase="yes"
+			shift 1
+		fi
 		branch="$1"
 		[ -z "$branch" ] && branch=$(current_branch)
 		[ "$branch" == 'master' ] && crap "Cannot grab master"
@@ -334,30 +343,45 @@ case "$cmd" in
 		echo
 		echo "== Checking out $branch"
 		git checkout -b "$branch" "origin/$branch"
-		echo
-		echo "== Rebasing to master"
-		git rebase master
+		if [ -z "$norebase" ]
+		then
+			echo
+			echo "== Rebasing to master"
+			git rebase master
+		fi
 		;;
-	migrename)
+	mr|migrename)
 		mp=$(find_migrations_path)
 		# skip projects without migrations
 		[ "$mp" ] || exit 0
-		newfname=""
+
+		nocommit=""
+		if [ "$1" = "-n" ]
+		then
+			nocommit="yes"
+		fi
+
 		# renaming all new migrations to from NNNNNNNNNNNN_x (timestamp) to NNNN_x
 		set +e # prevent empty grep from killing our script
 		list="$(ls "$mp" | grep -E '^[0-9]{5}')"
+		set -e
 		if [ "$list" ]
 		then
+			if [ -z "$nocommit" ]
+			then
+				# checking for dirty index/untracked files
+				[ "$(git status --porcelain 2>/dev/null)" ] && crap "Cannot rename migrations: there are uncommitted changes"
+			fi
+
 			echo "$list" | while read fname
 			do
-				set -e
-				# checking for dirty index/untracked files
-				# (inside loop so we don't bother the user if there's nothing to rename)
-				[ -z "$newfname" ] && [ "$(git status --porcelain 2>/dev/null)" ] && crap "Cannot rename migrations: there are uncommitted changes"
 				# finding maximum number in files
+				set +e
 				last_prefix=$(ls "$mp" | grep -oE '^[0-9]{4}_' | sort -r | head -n1 | grep -oE '[0-9]+')
+				set -e
 				# removing leading zeros
-				number=$(echo "$last_prefix" | sed 's/^0\+//')
+				[ "$number" ] && number=$(echo "$last_prefix" | sed 's/^0\+//')
+				[ -z "$number" ] && number="0"
 				# making the new filename
 				let number++
 				number=$(printf '%04d' "$number")
@@ -365,7 +389,11 @@ case "$cmd" in
 				echo "Renaming $fname to $newfname"
 				mv "$mp/$fname" "$mp/$newfname"
 			done
-			$SELF am "Renaming migrations from timestamps to number prefixes (see #847 for details)"
+
+			if [ -z "$nocommit" ]
+			then
+				$SELF am "Renaming migrations from timestamps to number prefixes (see #847 for details)"
+			fi
 		fi
 		;;
 
