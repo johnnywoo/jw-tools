@@ -349,6 +349,7 @@ case "$cmd" in
 			echo "== Rebasing to master"
 			git rebase master
 		fi
+		$SELF sm
 		;;
 	mr|migrename)
 		mp=$(find_migrations_path)
@@ -380,8 +381,8 @@ case "$cmd" in
 				last_prefix=$(ls "$mp" | grep -oE '^[0-9]{4}_' | sort -r | head -n1 | grep -oE '[0-9]+')
 				set -e
 				# removing leading zeros
-				[ "$number" ] && number=$(echo "$last_prefix" | sed 's/^0\+//')
-				[ -z "$number" ] && number="0"
+				[ "$last_prefix" ] && number=$(echo "$last_prefix" | sed 's/^0\+//')
+				[ -z "$last_prefix" ] && number="0"
 				# making the new filename
 				let number++
 				number=$(printf '%04d' "$number")
@@ -389,7 +390,6 @@ case "$cmd" in
 				echo "Renaming $fname to $newfname"
 				mv "$mp/$fname" "$mp/$newfname"
 			done
-
 			if [ -z "$nocommit" ]
 			then
 				$SELF am "Renaming migrations from timestamps to number prefixes (see #847 for details)"
