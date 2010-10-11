@@ -244,6 +244,12 @@ case "$cmd" in
 
 	a)
 		wait_for_git_lock
+
+		if [ "$(current_branch)" = "master" ]
+		then
+			$SELF migrename -n
+		fi
+
 		if [ $# = 0 ]
 		then
  			git add -Av .
