@@ -127,6 +127,24 @@ current_branch() {
 	git branch --no-color 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
 
+guess_remote_branch() { # [branch name | ticket number]
+	# no branch given: take current branch
+	[ -z "$1" ] && current_branch && return
+	# ticket number: try to find a branch for it
+	if [[ "$1" != ^[0-9]+$ ]]
+	then
+		bs=$(git branch -r --no-color 2>/dev/null | sed -e 's/^ *origin\///' | grep -e '^[^ ]\+$' | grep "_${1}_")
+		n=$(echo "$bs" | wc -l)
+		if [ $n = "1" ]
+		then
+			echo "$bs"; exit
+			return
+		fi
+	fi
+	# nothing is found, returning
+	echo "$1"
+}
+
 # cuts first numeric sequence from the input
 guess_ticket() { # ticket id or branch name
 	echo "$1" | egrep -o '[0-9]+' | head -n 1
@@ -337,9 +355,9 @@ case "$cmd" in
 			norebase="yes"
 			shift 1
 		fi
-		branch="$1"
-		[ -z "$branch" ] && branch=$(current_branch)
+		branch=$(guess_remote_branch "$1")
 		[ "$branch" == 'master' ] && crap "Cannot grab master"
+		[ -z "$branch" ] && crap "You must specify the branch"
 		[ -z "$(git branch -r | grep "origin/$branch")" ] && crap "No branch $branch in origin"
 		# going to master so we can delete current branch
 		git checkout master
