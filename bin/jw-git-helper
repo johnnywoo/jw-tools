@@ -131,13 +131,13 @@ guess_remote_branch() { # [branch name | ticket number]
 	# no branch given: take current branch
 	[ -z "$1" ] && current_branch && return
 	# ticket number: try to find a branch for it
-	if [[ "$1" != ^[0-9]+$ ]]
+	if [[ "$1" =~ ^[0-9]+$ ]]
 	then
 		bs=$(git branch -r --no-color 2>/dev/null | sed -e 's/^ *origin\///' | grep -e '^[^ ]\+$' | grep "_${1}_")
 		n=$(echo "$bs" | wc -l)
 		if [ $n = "1" ]
 		then
-			echo "$bs"; exit
+			echo "$bs"
 			return
 		fi
 	fi
