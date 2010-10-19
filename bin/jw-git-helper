@@ -581,6 +581,7 @@ case "$cmd" in
 							towner=$(echo "$trac_line" | cut -d' ' -f3)
 							color="yellow"
 							[ "$tstatus" = "pushed" ] && color="blue" && descr="P" && suffix=" (reviewer $towner)"
+							[ "$tstatus" = "pushed" ] && [ "$towner" = "agalkin" ] && color="cyan"
 							[ "$tstatus" = "reviewed" ] && color="red" && descr="R"
 							[ "$tstatus" = "validated" ] && color="green" && descr="V"
 						fi
