@@ -344,6 +344,7 @@ case "$cmd" in
 		;;
 	bm)
 		wait_for_git_lock
+		git rebase --abort >/dev/null 2>/dev/null || true
 		git checkout master
 		;;
 	g|grab)
