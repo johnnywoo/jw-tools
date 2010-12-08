@@ -444,7 +444,7 @@ case "$cmd" in
 		git checkout master
 		echo
 		echo "== Merging $branch into master"
-		git merge "$branch"
+		git merge --no-ff "$branch"
 		echo
 		echo "== Pushing master"
 		git push origin master
