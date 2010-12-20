@@ -14,3 +14,7 @@ editor = nano
 
 [diff "cp1251"]
 textconv = jw-win2utf
+
+[format]
+pretty=format:%C(yellow)%h%Creset - %s %Cgreen(%an)%Creset%C(yellow)%d%Creset
+

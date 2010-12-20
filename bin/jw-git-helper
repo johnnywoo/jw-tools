@@ -18,9 +18,9 @@ Information:
   l       List of all branches. Auto-updates remote list.
   i       Show changes in current branch since master.
   dl      Show diff for last commit in the branch.
-  stm     diff --stat, with master by default
-  dtm     diff, with master by default
-  ltm     log, with master by default
+  sm      diff --stat, with master by default
+  dm      diff, with master by default
+  lm      log, with master by default
   help    An instruction on using this tool.
 Working:
   u       git pull
@@ -257,7 +257,7 @@ case "$cmd" in
 		wait_for_git_lock
 		arg="$1"
 		[ -z "$arg" ] && arg="master.."
-		git log "$arg"
+		git log --graph "$arg"
 		;;
 
 	a)

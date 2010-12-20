@@ -40,6 +40,9 @@ alias g="grep -i"
 alias iih="sudo /etc/init.d/httpd"
 alias iim="sudo /etc/init.d/mysqld"
 
+alias d="git diff"
+alias l="git log --graph"
+
 
 ###
 ## PS1
