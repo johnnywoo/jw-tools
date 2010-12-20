@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.3.3"
+PHP_VERSION="5.3.4"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/source"
 APACHE_FOLDER="/usr/local/apache2"
@@ -107,6 +107,17 @@ fi
 sudo ln -s "$INSTALL_BASE/php-$PHP_VERSION" "$INSTALL_BASE/php"
 
 
+
+echo
+echo "Installing APC"
+export PATH="$PATH:$APACHE_FOLDER/bin"
+sudo $INSTALL_BASE/php/bin/pecl install apc
+
+echo
+echo "Installing XDebug"
+sudo $INSTALL_BASE/php/bin/pecl install xdebug > xdebug.install.output
+
+
 echo
 echo "Installing PEAR packages"
 
@@ -118,17 +129,10 @@ sudo pear install -al Image_Graph
 sudo pear install -al Mail
 sudo pear install -al Mail_Mime
 sudo pear install -al Text_Diff
-
-
-
-echo
-echo "Installing APC"
-export PATH="$PATH:$APACHE_FOLDER/bin"
-sudo $INSTALL_BASE/php/bin/pecl install apc
-
-echo
-echo "Installing XDebug"
-sudo $INSTALL_BASE/php/bin/pecl install xdebug > xdebug.install.output
+sudo pear channel-discover pear.phpunit.de
+sudo pear channel-discover pear.symfony-project.com
+sudo pear channel-discover components.ez.no
+sudo pear install -al phpunit/PHPUnit
 
 
 
