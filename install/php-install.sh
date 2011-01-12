@@ -121,18 +121,18 @@ sudo $INSTALL_BASE/php/bin/pecl install xdebug > xdebug.install.output
 echo
 echo "Installing PEAR packages"
 
-sudo pear upgrade-all
-sudo pear config-set preferred_state devel
-sudo pear install -al HTTP_Request
-sudo pear install -al HTTP_Request2
-sudo pear install -al Image_Graph
-sudo pear install -al Mail
-sudo pear install -al Mail_Mime
-sudo pear install -al Text_Diff
-sudo pear channel-discover pear.phpunit.de
-sudo pear channel-discover pear.symfony-project.com
-sudo pear channel-discover components.ez.no
-sudo pear install -al phpunit/PHPUnit
+sudo $INSTALL_BASE/php/bin/pear upgrade-all
+sudo $INSTALL_BASE/php/bin/pear config-set preferred_state devel
+sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request
+sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request2
+sudo $INSTALL_BASE/php/bin/pear install -al Image_Graph
+sudo $INSTALL_BASE/php/bin/pear install -al Mail
+sudo $INSTALL_BASE/php/bin/pear install -al Mail_Mime
+sudo $INSTALL_BASE/php/bin/pear install -al Text_Diff
+sudo $INSTALL_BASE/php/bin/pear channel-discover pear.phpunit.de
+sudo $INSTALL_BASE/php/bin/pear channel-discover pear.symfony-project.com
+sudo $INSTALL_BASE/php/bin/pear channel-discover components.ez.no
+sudo $INSTALL_BASE/php/bin/pear install -al phpunit/PHPUnit
 
 
 
