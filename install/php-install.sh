@@ -129,6 +129,7 @@ sudo $INSTALL_BASE/php/bin/pear install -al Image_Graph
 sudo $INSTALL_BASE/php/bin/pear install -al Mail
 sudo $INSTALL_BASE/php/bin/pear install -al Mail_Mime
 sudo $INSTALL_BASE/php/bin/pear install -al Text_Diff
+sudo $INSTALL_BASE/php/bin/pear install -al Console_Color
 sudo $INSTALL_BASE/php/bin/pear channel-discover pear.phpunit.de
 sudo $INSTALL_BASE/php/bin/pear channel-discover pear.symfony-project.com
 sudo $INSTALL_BASE/php/bin/pear channel-discover components.ez.no
