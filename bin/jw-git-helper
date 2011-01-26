@@ -213,6 +213,28 @@ assign_ticket() { # ticket author
 	echo " " | $JW_TRAC_CMD save "$1" owner:$2
 }
 
+display_status() { # status name regexp color
+	x="$(echo "$1" | grep -E "$3" || true)"
+	if [ "$x" ]; then
+		echo "$2"
+		oIFS="$IFS"; IFS=""
+		echo "$x" | while read line; do
+			f1="${line:0:1}"
+			f2="${line:1:1}"
+			rest="${line:2}"
+			[ "$f1" == "?" ] && f1="" && f2="?$f2"
+			echo -ne "\033[32m" # green
+			echo -n "$f1"
+			echo -ne "\033[31m" # red
+			echo -n "$f2"
+			echo -ne "\033[$4m" # given color
+			echo "$rest"
+			echo -ne "\033[0m" # white
+		done
+		IFS="$oIFS"
+	fi
+}
+
 cmd="$1"
 shift 1
 
@@ -222,7 +244,10 @@ case "$cmd" in
 		;;
 	s)
 		wait_for_git_lock
-		git status
+		status="$(git status --porcelain)"
+		display_status "$status" 'Staged:'     '^[A-Z]'  32 # green
+		display_status "$status" 'Not staged:' '^.[A-Z]' 31 # red
+		display_status "$status" 'Untracked:'  '^\?'     31 # red
 		;;
 	so)
 		wait_for_git_lock
