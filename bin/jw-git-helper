@@ -417,7 +417,8 @@ case "$cmd" in
 			done
 			if [ -z "$nocommit" ]
 			then
-				$SELF am "Renaming migrations from timestamps to number prefixes (see #847 for details)"
+				git add -Av .
+				git commit -m "Renaming migrations from timestamps to number prefixes (see #847 for details)"
 			fi
 		fi
 		;;
