@@ -70,6 +70,11 @@ unset c h PS1_COLOR JW_PERSONAL_DIR
 HISTFILESIZE=100000000
 HISTSIZE=10000
 
+# Ctrl-p: search in previous history
+bind 'Control-p: history-search-backward'
+bind -m vi-insert 'Control-p: history-search-backward'
+bind -m vi-command 'Control-p: history-search-backward'
+
 
 # Coloring man output
 # start sequences (printed before special text):
