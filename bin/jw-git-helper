@@ -27,6 +27,7 @@ Working:
   ss      git stash
   sp      git stash pop
   r       git checkout --
+  ok      add everything and continue rebase
 Committing:
   a       git add
   m       git commit
@@ -353,6 +354,11 @@ case "$cmd" in
 		branch=$(current_branch)
 		$JW_CONFIRM_CMD "Do you really want to force push? Can't be good, you know." || exit 1
 		git push --force origin "$branch"
+		;;
+	ok)
+		wait_for_git_lock
+		$SELF a
+		git rebase --continue
 		;;
 	u)
 		wait_for_git_lock
