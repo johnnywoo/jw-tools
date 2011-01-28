@@ -23,13 +23,18 @@ export EDITOR="nano"
 ## ALIAS
 #
 
+# ls colors are set to a minimal scheme with no backgrounds;
+# file=white dir=blue exec=yellow link=cyan weird=red
 if ls --file-type / >/dev/null 2>&1
 then
 	# CentOS
-	alias a="ls -AGl --color=never --file-type"
+	LS_COLORS='no=00:fi=00:ex=33:di=34:ln=36:pi=31:so=31:do=31:bd=31:cd=31:or=31:';
+	export LS_COLORS
+	alias a="ls -AGl --color"
 else
 	# Mac OS X
-	alias a="ls -Apl"
+	export LSCOLORS=exgxbxbxdxbxbxbxbxbxbx
+	alias a="ls -GAl"
 fi
 
 alias ..="cd .."
