@@ -28,7 +28,7 @@ export EDITOR="nano"
 if ls --file-type / >/dev/null 2>&1
 then
 	# CentOS
-	LS_COLORS='no=00:fi=00:ex=33:di=34:ln=36:pi=31:so=31:do=31:bd=31:cd=31:or=31:';
+	LS_COLORS='no=00:fi=00:di=34:ln=36:pi=31:so=31:do=31:bd=31:cd=31:or=31:su=00:sg=00:tw=34:ow=34:st=34:ex=33:mi=31:'
 	export LS_COLORS
 	alias a="ls -AGl --color"
 else
