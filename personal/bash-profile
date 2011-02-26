@@ -48,6 +48,8 @@ alias iim="sudo /etc/init.d/mysqld"
 alias d="git diff"
 alias l="git log --graph"
 
+alias dutop='du -ms * | sort -nr | head'
+
 
 ###
 ## PS1
