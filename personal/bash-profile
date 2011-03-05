@@ -28,8 +28,7 @@ export EDITOR="nano"
 if ls --file-type / >/dev/null 2>&1
 then
 	# CentOS
-	LS_COLORS='no=00:fi=00:di=34:ln=36:pi=31:so=31:do=31:bd=31:cd=31:or=31:su=00:sg=00:tw=34:ow=34:st=34:ex=33:mi=31:'
-	export LS_COLORS
+	export LS_COLORS='no=00:fi=00:di=34:ln=36:pi=31:so=31:do=31:bd=31:cd=31:or=31:su=00:sg=00:tw=34:ow=34:st=34:ex=33:mi=31:'
 	alias a="ls -AGl --color"
 else
 	# Mac OS X
@@ -58,7 +57,7 @@ alias dutop='du -ms * | sort -nr | head'
 source "$JW_PERSONAL_DIR/git-completion.sh"
 
 # available colors: red green blue yellow cyan pink gray white
-[ -z "PS1_COLOR" ] && PS1_COLOR="white"
+[ -z "$PS1_COLOR" ] && PS1_COLOR="white"
 c=$(jw-colorpicker $PS1_COLOR)
 
 # we ignore host part for .local hosts
@@ -77,11 +76,9 @@ unset c h PS1_COLOR JW_PERSONAL_DIR
 HISTFILESIZE=100000000
 HISTSIZE=10000
 
-# Ctrl-p: search in previous history
-bind 'Control-p: history-search-backward'
-bind -m vi-insert 'Control-p: history-search-backward'
-bind -m vi-command 'Control-p: history-search-backward'
-
+# up-down navigation respects already typed symbols
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
 
 # Coloring man output
 # start sequences (printed before special text):
