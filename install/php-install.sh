@@ -55,7 +55,7 @@ export CXXFLAGS=" -O9 -pipe "
 --prefix=/usr/local/php-$PHP_VERSION \
 $apxs_arg \
 --with-zlib-dir=/usr/lib \
---with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd \
+'--with-mysql=/usr' '--with-mysqli=/usr/bin/mysql_config' '--with-pdo-mysql=/usr' \
 --enable-mbstring --enable-mbstring=all \
 --with-gd --with-jpeg-dir=/usr/lib --with-png-dir=/usr/lib \
 --enable-gd-native-ttf --with-freetype-dir=/usr/lib \
@@ -107,11 +107,13 @@ fi
 sudo ln -s "$INSTALL_BASE/php-$PHP_VERSION" "$INSTALL_BASE/php"
 
 
+export PATH="$PATH:$APACHE_FOLDER/bin"
+sudo $INSTALL_BASE/php/bin/pear upgrade-all
+
 
 echo
 echo "Installing APC"
-export PATH="$PATH:$APACHE_FOLDER/bin"
-sudo $INSTALL_BASE/php/bin/pecl install apc
+sudo $INSTALL_BASE/php/bin/pecl install apc-3.1.6
 
 echo
 echo "Installing XDebug"
@@ -121,7 +123,6 @@ sudo $INSTALL_BASE/php/bin/pecl install xdebug > xdebug.install.output
 echo
 echo "Installing PEAR packages"
 
-sudo $INSTALL_BASE/php/bin/pear upgrade-all
 sudo $INSTALL_BASE/php/bin/pear config-set preferred_state devel
 sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request
 sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request2
