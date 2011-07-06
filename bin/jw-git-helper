@@ -46,6 +46,7 @@ Manipulation:
   rd      Deletes a remote branch.
   accept  Merge current branch into master, push master,
           then remove the branch from both servers.
+          If a branch is specified, it will be grabbed before accepting.
 Trac:
   t       Show ticket info.
   te      Edit ticket description.
@@ -469,6 +470,7 @@ case "$cmd" in
 		git push origin :$branch
 		;;
 	accept)
+		[ "$1" ] && $SELF grab "$1"
 		wait_for_git_lock
 		branch=$(current_branch)
 		echo
