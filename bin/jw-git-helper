@@ -18,16 +18,15 @@ Information:
   l       List of all branches. Auto-updates remote list.
   i       Show changes in current branch since master.
   dl      Show diff for last commit in the branch.
-  sm      diff --stat, with master by default
-  dm      diff, with master by default
-  lm      log, with master by default
-  help    An instruction on using this tool.
+  sm      diff --stat, with master by default.
+  dm      diff, with master by default.
+  lm      log, with master by default.
 Working:
   u       git pull
   ss      git stash
   sp      git stash pop
   r       git checkout --
-  ok      add everything and continue rebase
+  ok      Add everything and continue rebase.
 Committing:
   a       git add
   m       git commit
@@ -35,82 +34,24 @@ Committing:
   p       Push current branch to origin.
   fp      Push current branch to origin (with --force).
   mr [-n] Rename migrations from timestamps to ordered numbers
-          (-n is no rename without committing)
+          (-n is no rename without committing).
 Branches:
   b       Switch to a branch, creates it if necessary.
   bm      Switch to master branch.
-  g [-n]  Create a local branch from the remote one, then rebase.
-          (-n is to skip the rebase part)
+  g [-n]  Create a local branch from the remote one, then rebase
+          (-n is to skip the rebase part).
           Will overwrite local branch completely.
 Manipulation:
   rd      Deletes a remote branch.
   accept  Merge current branch into master, push master,
           then remove the branch from both servers.
           If a branch is specified, it will be grabbed before accepting.
+  accept-all
+          Accept all currently validated branches.
 Trac:
   t       Show ticket info.
   te      Edit ticket description.
   fix     Close ticket (fixed).
-  ta      Change ticket owner according to branch name.
-  rw      Touch code review status.
-  w       Show review status across all configured repos
-EOF
-}
-
-show_help()
-{
-usage
-cat << EOF
-
-Working with repositories as a lead programmer:
-
- 1. Look at the list of branches in all repos:
-
-       gh w
-
-    It will show all development branches with review status in colour:
-    red = no review, yellow = changed after review, green = reviewed.
-
- 2. If you want to examine a branch, grab it:
-
-       gh g branch_name
-
-    Grab will checkout the branch as it is in origin, discarding any local changes,
-    so you can be sure that you're looking at the latest code.
-
-    Grab will also rebase the local branch to master. If rebase fails, you should
-    tell the developer to rebase his local copy and push again. If you want to
-    merge yourself, don't forget that running grab again will erase your merge.
-
-    You can omit branch name to regrab current branch.
-
- 3. Open the ticket description:
-
-       gh t
-
-    Ticket number is taken from the name of current branch.
-
- 4. Use your IDE and merge tools to examine the changes.
-
- 5. If you do not want to accept the branch, you can edit ticket description
-    to tell its owner what is wrong:
-
-       gh te
-
-    Then mark review complete:
-
-       gh rw [review_summary]
-
-    The review summary does not go into the ticket, it is only displayed in output of 'rw',
-    so you know what was reviewed and which branches were updated afterwards.
-
- 6. If you want to accept the branch into master, simply type:
-
-       gh accept
-
-    This will merge the branch into master, remove the branch from both local and remote
-    servers, and close the ticket as fixed (you will be asked for confirmation).
-
 EOF
 }
 
@@ -201,6 +142,8 @@ wait_for_git_lock() {
 		do
 			echo -ne "."
 			sleep 1
+			# not waiting for too long
+			rm -f "$lockf"
 		done
 		echo
 	fi
@@ -247,9 +190,6 @@ cmd="$1"
 shift 1
 
 case "$cmd" in
-	help)
-		show_help
-		;;
 	s)
 		wait_for_git_lock
 		status="$(git status --porcelain)"
@@ -469,7 +409,14 @@ case "$cmd" in
 		git branch -r | grep "origin/$branch" >/dev/null || crap "No branch $branch in origin"
 		git push origin :$branch
 		;;
-	accept)
+	accept-all)
+		for ticket in $($JW_TRAC_CMD list-validated); do
+			$SELF grab $ticket
+			# merging the branch into master, closing the ticket
+			yes | $SELF accept
+		done
+		;;
+	ac|accept)
 		[ "$1" ] && $SELF grab "$1"
 		wait_for_git_lock
 		branch=$(current_branch)
@@ -540,18 +487,6 @@ case "$cmd" in
 				echo
 				$JW_CONFIRM_CMD "Do you want to mark review complete for $branch?" \
  					&& $SELF rw "$ticket"
-
-				# reverting ticket back to its owner
-				#author=$(guess_author "$branch")
-				#if head -n 1 "$tmpf" | grep -v "$author" >/dev/null
-				#then
-				#	echo
-				#	$JW_TRAC_CMD view "$ticket" | head -n 2
-				#	if $JW_CONFIRM_CMD "Do you want to assign this ticket to $author?"
-				#	then
-				#		assign_ticket "$ticket" "$author"
-				#	fi
-				#fi
 			fi
 		fi
 		rm $tmpf $tmpf2
@@ -561,86 +496,6 @@ case "$cmd" in
 		ticket=$(current_ticket "$1")
 		echo "Closing ticket $ticket"
 		echo " " | $JW_TRAC_CMD save "$ticket" status:closed resolution:fixed
-		;;
-	rw)
-		require_trac
-		ticket=$(current_ticket "$1")
-		echo "Marking ticket $ticket as reviewed"
-		$JW_TRAC_CMD mark-review "$ticket"
-		;;
-	w)
-		require_trac
-		[ -z "$JW_REVIEWABLE_PROJECTS" ] && crap "No repos configured for reviewing"
-
-		# accumulating report
-		report=$(
-			echo "$JW_REVIEWABLE_PROJECTS" | while read fld; do
-				cd "$fld"
-				project=$(basename "$fld")
-				echo "project $project"
-
-				# need the sort so grep would not cause exit
-				git branch -r --no-color | \
- 				cut -d" " -f 3 | cut -d"/" -f 2 | \
- 				grep -v '^master$' | grep -v '^HEAD$' | \
- 				sort | while read branch; do
-					echo "branch $branch"
-				done
-			done
-		)
-
-		# loading tickets info from trac
-		tickets=$(echo "$report" | grep ^branch | egrep -o "[0-9]+")
-		ticket_info=""
-		[ "$tickets" ] && ticket_info=$($JW_TRAC_CMD status-info $tickets)
-
-		echo "$report" | while read line; do
-			type=$(echo "$line" | cut -d' ' -f1)
-			item=$(echo "$line" | cut -d' ' -f2)
-			case "$type" in
-				"project")
-					project="$item"
-					;;
-				"branch")
-					if [ "$project" ]
-					then
-						echo
-						echo "$project"
-						project=""
-					fi
-
-					color="white"
-					descr=" "
-					suffix=""
-					ticket=$(guess_ticket "$item")
-					if [ "$ticket" ]
-					then
-						trac_line=$(echo "$ticket_info" | grep "^$ticket " | head -n1)
-						if [ "$trac_line" ]
-						then
-							# ticket changed reviewed pushed merged
-							tstatus=$(echo "$trac_line" | cut -d' ' -f2)
-							towner=$(echo "$trac_line" | cut -d' ' -f3)
-							color="yellow"
-							[ "$tstatus" = "pushed" ] && color="blue" && descr="P" && suffix=" (reviewer $towner)"
-							[ "$tstatus" = "pushed" ] && [ "$towner" = "agalkin" ] && color="cyan"
-							[ "$tstatus" = "reviewed" ] && color="red" && descr="R"
-							[ "$tstatus" = "validated" ] && color="green" && descr="V"
-						fi
-					fi
-					echo "$(jw-paint $color " $descr $item$suffix")"
-					;;
-			esac
-		done
-		echo
-		;;
-	ta)
-		require_trac
-		ticket=$(current_ticket "$1")
-		author=$(guess_author)
-		$JW_TRAC_CMD view "$ticket" | head -n 2
-		$JW_CONFIRM_CMD "Do you want to assign this ticket to $author?" || exit 1
-		assign_ticket "$ticket" "$author"
 		;;
 	*)
 		echo "Unrecognized command: $cmd" >&2
