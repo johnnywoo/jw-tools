@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.3.6"
+PHP_VERSION="5.3.7"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 APACHE_FOLDER="/usr/local/apache2"
@@ -113,7 +113,7 @@ sudo $INSTALL_BASE/php/bin/pear upgrade-all
 
 echo
 echo "Installing APC"
-sudo $INSTALL_BASE/php/bin/pecl install apc-3.1.6
+sudo $INSTALL_BASE/php/bin/pecl install apc
 
 echo
 echo "Installing XDebug"
