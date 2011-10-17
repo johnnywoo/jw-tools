@@ -120,6 +120,12 @@ current_project_root() {
 	crap "Not in a git repository"
 }
 
+mark_branch_date() { # [ticket id]
+	ticket="$1"
+	[ -z "$ticket" ] && ticket=$(current_ticket)
+	[ "$ticket" ] && wget -qO- "http://agalkin:ldflt,bkf@manager.trac.vps.loc/?action=touch_branch_date&id=$ticket" | tee /dev/stderr | grep -vq error	
+}
+
 find_migrations_path() {
 	x=$(current_project_root)
 	[ -d "$x/$JW_MIGRATIONS_PATH" ] && echo "$x/$JW_MIGRATIONS_PATH" || true # prevent the function from returning 1
@@ -320,6 +326,7 @@ case "$cmd" in
 		needcreate=""
 		git branch --no-color | grep "$1" >/dev/null || needcreate="-b"
 		git checkout $needcreate "$1"
+		[ -z "$needcreate" ] || mark_branch_date
 		;;
 	bm)
 		wait_for_git_lock
@@ -411,9 +418,14 @@ case "$cmd" in
 		;;
 	accept-all)
 		for ticket in $($JW_TRAC_CMD list-validated); do
-			$SELF grab $ticket
-			# merging the branch into master, closing the ticket
-			yes | $SELF accept
+			echo
+			echo
+			echo "Trying to accept ticket $ticket"
+			echo
+			if $SELF grab $ticket; then
+				# merging the branch into master, closing the ticket
+				yes | $SELF accept
+			fi
 		done
 		;;
 	ac|accept)
