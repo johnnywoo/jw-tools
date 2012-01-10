@@ -42,7 +42,11 @@ alias ...="cd ../.."
 alias g="grep -i"
 
 alias iih="sudo /etc/init.d/httpd"
-alias iim="sudo /etc/init.d/mysqld"
+if [ -e /etc/init.d/mysql ]; then
+	alias iim="sudo /etc/init.d/mysql"
+else
+	alias iim="sudo /etc/init.d/mysqld"
+fi
 
 alias d="git diff"
 alias l="git log --graph"
