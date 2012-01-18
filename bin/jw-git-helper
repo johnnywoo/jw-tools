@@ -360,7 +360,7 @@ case "$cmd" in
 			echo "== Rebasing to master"
 			git rebase master
 		fi
-		$SELF sm
+		#$SELF sm
 		;;
 	mr|migrename)
 		mp=$(find_migrations_path)
@@ -395,7 +395,7 @@ case "$cmd" in
 				[ "$last_prefix" ] && number=$(echo "$last_prefix" | sed 's/^0\+//')
 				[ -z "$last_prefix" ] && number="0"
 				# making the new filename
-				let number++
+				let number+=1
 				number=$(printf '%04d' "$number")
 				newfname="$number$(echo "$fname" | sed 's/^[0-9]\+//')"
 				echo "Renaming $fname to $newfname"
