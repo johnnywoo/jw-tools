@@ -108,6 +108,7 @@ sudo ln -s "$INSTALL_BASE/php-$PHP_VERSION" "$INSTALL_BASE/php"
 
 
 export PATH="$PATH:$APACHE_FOLDER/bin"
+sudo $INSTALL_BASE/php/bin/pear clear-cache
 sudo $INSTALL_BASE/php/bin/pear upgrade-all
 
 
