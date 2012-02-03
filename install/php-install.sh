@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.3.9"
+PHP_VERSION="5.3.10"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 APACHE_FOLDER="/usr/local/apache2"
@@ -108,7 +108,7 @@ sudo ln -s "$INSTALL_BASE/php-$PHP_VERSION" "$INSTALL_BASE/php"
 
 
 export PATH="$PATH:$APACHE_FOLDER/bin"
-sudo $INSTALL_BASE/php/bin/pear clear-cache
+sudo $INSTALL_BASE/php/bin/pear clear-cache >/dev/null 2>&1 || true
 sudo $INSTALL_BASE/php/bin/pear upgrade-all
 
 
