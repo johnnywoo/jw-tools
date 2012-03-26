@@ -1,0 +1,59 @@
+#!/bin/env php
+<?
+
+$errors = array(
+	E_ERROR             => 'E_ERROR',
+	E_WARNING           => 'E_WARNING',
+	E_PARSE             => 'E_PARSE',
+	E_NOTICE            => 'E_NOTICE',
+	E_CORE_ERROR        => 'E_CORE_ERROR',
+	E_CORE_WARNING      => 'E_CORE_WARNING',
+	E_COMPILE_ERROR     => 'E_COMPILE_ERROR',
+	E_COMPILE_WARNING   => 'E_COMPILE_WARNING',
+	E_USER_ERROR        => 'E_USER_ERROR',
+	E_USER_WARNING      => 'E_USER_WARNING',
+	E_USER_NOTICE       => 'E_USER_NOTICE',
+	E_USER_DEPRECATED   => 'E_USER_DEPRECATED',
+	E_STRICT            => 'E_STRICT',
+	E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+	E_DEPRECATED        => 'E_DEPRECATED',
+);
+
+if(!isset($argv[1]) || !is_numeric($argv[1]))
+	die("Do you mind giving me an error level, love?\n");
+
+
+echo "Your level is:\n";
+$level = (int) $argv[1];
+foreach($errors as $bit => $name)
+{
+	if($level & $bit)
+		echo "$name\n";
+	$level = $level & ~$bit;
+}
+
+if($level != 0)
+	echo "Unknown bits: " . decbin($level) . "\n";
+
+
+echo "\nYour level does not have:\n";
+$level = (int) $argv[1];
+$all = 0;
+foreach($errors as $bit=>$name)
+{
+	$all |= $bit;
+}
+$level = $all & ~$level;
+
+foreach($errors as $bit => $name)
+{
+	if($level & $bit)
+		echo "$name\n";
+	$level &= ~$bit;
+}
+
+if($level != 0)
+{
+	echo "Unknown bits: " . decbin($level) . "\n";
+	echo "E_ALL:        " . decbin(E_ALL) . "\n";
+}
