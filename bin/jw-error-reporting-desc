@@ -39,7 +39,7 @@ if($level != 0)
 echo "\nYour level does not have:\n";
 $level = (int) $argv[1];
 $all = 0;
-foreach($errors as $bit=>$name)
+foreach($errors as $bit => $name)
 {
 	$all |= $bit;
 }
