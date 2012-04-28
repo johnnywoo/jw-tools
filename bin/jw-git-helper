@@ -122,7 +122,7 @@ current_project_root() {
 
 mark_branch_date() { # [ticket id]
 	ticket="$1"
-	[ -z "$ticket" ] && ticket=$(current_ticket)
+	[ -z "$ticket" ] && ticket=$(current_ticket 2>/dev/null)
 	[ "$ticket" ] && wget -qO- "http://agalkin:ldflt,bkf@manager.trac.vps.loc/?action=touch_branch_date&id=$ticket" | tee /dev/stderr | grep -vq error	
 }
 
