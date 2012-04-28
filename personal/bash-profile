@@ -53,6 +53,7 @@ alias l="git log --graph"
 
 alias dutop='du -ms * | sort -nr | head'
 
+alias t='top -d1 -M'
 
 ###
 ## PS1
