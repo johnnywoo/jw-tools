@@ -1,23 +1,64 @@
 #!/bin/bash
 
-def="y"
-str="[Y/n] "
+# jw-confirm [-n] [message]
+#
+# Prompts for a yes/no response. Exits with non-zero status on "no".
+# -n: default to "no". Default is what you get when you press Enter.
+# Use left/right keys to toggle the default.
+#
+# Johnny Woo <agalkin@agalkin.ru>
 
-if [ "$1" = "-n" ]
-then
+def="y"
+if [ "$1" = "-n" ]; then
 	def="n"
-	str="[y/N] "
 	shift
 fi
 
-while true
-do
-	read -p "$1 $str" x
+gimme_prompt() { # message
+	[ "$1" ] && echo -n "$1 "
+	[ "$def" == "y" ] && echo "[Y/n] " || echo "[y/N] "
+}
+
+read_char() { # prompt_string
+	read -sn1 -p "$1" char
+	if [ "$char" = $'\e' ]; then
+		read -sn2 chars
+		case "$chars" in
+			"[A") echo "up";;
+			"[B") echo "down";;
+			"[C") echo "right";;
+			"[D") echo "left";;
+		esac
+	else
+		echo "$char"
+	fi
+}
+
+while true; do
+	pr="$(gimme_prompt "$1")"
+	x="$(read_char "$pr")"
+
+	sound_the_alarm="it would be impolite not to"
+
+	# switch default if an arrow key is present
+	# works wonders if you're bilingual
+	if [ "$x" = "left" -o "$x" = "right" ]; then
+		sound_the_alarm=""
+		[ "$def" = "n" ] && def=y || def=n
+	fi
 
 	# empty value
-	[ -z "$x" ] && x=$def
+	[ -z "$x" ] && x="$def"
 
 	# correct value
-	[ "$x" = "y" ] && exit 0
-	[ "$x" = "n" ] && exit 1
+	[ "$x" = "y" ] && echo "$x" && exit 0
+	[ "$x" = "n" ] && echo "$x" && exit 1
+
+	# the user entered something we didn't account for, 
+	# but we don't echo it back to him, so let's at least scream
+	[ "$sound_the_alarm" ] && echo -ne "\007"
+
+	# erasing the last line
+	echo -en "\r\033[K"
 done
+
