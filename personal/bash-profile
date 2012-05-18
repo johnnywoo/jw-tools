@@ -64,14 +64,16 @@ source "$JW_PERSONAL_DIR/git-completion.sh"
 # available colors: red green blue yellow cyan pink gray white
 [ -z "$PS1_COLOR" ] && PS1_COLOR="white"
 c=$(jw-colorpicker $PS1_COLOR)
+# for error exit code
+red=$(jw-colorpicker red)
 
 # we ignore host part for .local hosts
 h=$(hostname | grep -q '.local$' || echo -ne '@\h')
 
 # user@host folder (git)$
-PS1="\[\033[${c}m\]\u$h \W\$(__git_ps1 \" (%s)\")\$\[\033[0m\] "
-
-unset c h PS1_COLOR JW_PERSONAL_DIR
+PS1="\$([[ \$? -eq 0 ]] || echo -e \"\[\033[${red}m[exit \$?]\012 \010\")\[\033[${c}m\]\u$h \W\$(__git_ps1 \" (%s)\")\$\[\033[0m\] "
+# the space+\010 is a hack, I can't figure out how to make $() not eat the newline at the end
+unset c red h PS1_COLOR JW_PERSONAL_DIR
 
 
 ###
