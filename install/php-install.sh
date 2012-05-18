@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.3.11"
+PHP_VERSION="5.3.13"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 APACHE_FOLDER="/usr/local/apache2"
@@ -125,6 +125,7 @@ echo
 echo "Installing PEAR packages"
 
 sudo $INSTALL_BASE/php/bin/pear config-set preferred_state devel
+sudo $INSTALL_BASE/php/bin/pear config-set auto_discover 1
 sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request
 sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request2
 sudo $INSTALL_BASE/php/bin/pear install -al Image_Graph
@@ -136,7 +137,8 @@ sudo $INSTALL_BASE/php/bin/pear channel-discover pear.phpunit.de
 sudo $INSTALL_BASE/php/bin/pear channel-discover pear.symfony-project.com
 sudo $INSTALL_BASE/php/bin/pear channel-discover components.ez.no
 sudo $INSTALL_BASE/php/bin/pear install -al phpunit/PHPUnit
-
+sudo $INSTALL_BASE/php/bin/pear channel-discover pear.horde.org
+sudo $INSTALL_BASE/php/bin/pear install -al horde/horde_text_diff
 
 
 echo
