@@ -253,8 +253,8 @@ case "$cmd" in
  			git add -Av .
  		else
 			git add -Av "$@"
-			$SELF s
 		fi
+		$SELF s
 		;;
 	m)
 		wait_for_git_lock
