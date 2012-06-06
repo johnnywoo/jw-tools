@@ -311,6 +311,7 @@ case "$cmd" in
 	u)
 		wait_for_git_lock
 		git pull
+		git submodule update --recursive --init
 		;;
 	ss)
 		wait_for_git_lock
