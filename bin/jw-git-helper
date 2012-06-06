@@ -253,6 +253,7 @@ case "$cmd" in
  			git add -Av .
  		else
 			git add -Av "$@"
+			$SELF s
 		fi
 		;;
 	m)
