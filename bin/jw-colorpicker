@@ -54,5 +54,10 @@ then
 else
 	color=$(choose_color "$1")
 	[ -z "$color" ] && exit 1
-	echo "${out_prefix}${color}${out_suffix}"
+
+	if [ -z "$2" ]; then
+		echo "${out_prefix}${color}${out_suffix}"
+	else
+		echo -ne "\033[${color}m$2\033[m"
+	fi
 fi
