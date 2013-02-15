@@ -34,7 +34,7 @@ echo "Removing previous sources of $PHP_VERSION, if any"
 rm -rf "$SOURCE_FOLDER/php-$PHP_VERSION"
 
 echo "Removing previous installation of $PHP_VERSION, if any"
-rm -rf "~/.pearrc.5.3"
+rm -rf "~/.pearrc.5.3" "~/.pearrc.5.4"
 sudo rm -rf "/usr/local/php-$PHP_VERSION"
 [ "$APACHE_FOLDER" ] && sudo rm -rf "$APACHE_FOLDER/modules/libphp5-$PHP_VERSION.so"
 
@@ -48,6 +48,10 @@ echo "Configuring"
 apxs_arg="--with-apxs2=$APACHE_FOLDER/bin/apxs"
 [ -z "$APACHE_FOLDER" ] && apxs_arg=""
 
+mysql="--with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd"
+[ -e /usr/bin/mysql_config ] \
+	&& mysql='--with-mysql=/usr --with-mysqli=/usr/bin/mysql_config --with-pdo-mysql=/usr'
+
 export CFLAGS=" -O9 -pipe "
 export CPPFLAGS=" -O9 -pipe "
 export CXXFLAGS=" -O9 -pipe "
@@ -55,7 +59,7 @@ export CXXFLAGS=" -O9 -pipe "
 --prefix=/usr/local/php-$PHP_VERSION \
 $apxs_arg \
 --with-zlib-dir=/usr/lib \
-'--with-mysql=/usr' '--with-mysqli=/usr/bin/mysql_config' '--with-pdo-mysql=/usr' \
+$mysql \
 --enable-mbstring --enable-mbstring=all \
 --with-gd --with-jpeg-dir=/usr/lib --with-png-dir=/usr/lib \
 --enable-gd-native-ttf --with-freetype-dir=/usr/lib \
