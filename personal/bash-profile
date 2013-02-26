@@ -48,12 +48,16 @@ else
 	alias iim="sudo /etc/init.d/mysqld"
 fi
 
+alias s="gh s"
 alias d="git diff"
 alias l="git log --graph"
 
 alias dutop='du -ms * | sort -nr | head'
 
 alias t='top -d1 -M'
+
+# forces sudo to use correct path (of current user)
+alias sudo='sudo env PATH=$PATH'
 
 ###
 ## PS1
