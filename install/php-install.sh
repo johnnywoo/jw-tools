@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.4.8"
+PHP_VERSION="5.4.12"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 APACHE_FOLDER="/usr/local/apache2"
@@ -49,8 +49,8 @@ apxs_arg="--with-apxs2=$APACHE_FOLDER/bin/apxs"
 [ -z "$APACHE_FOLDER" ] && apxs_arg=""
 
 mysql="--with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd"
-[ -e /usr/bin/mysql_config ] \
-	&& mysql='--with-mysql=/usr --with-mysqli=/usr/bin/mysql_config --with-pdo-mysql=/usr'
+# [ -e /usr/bin/mysql_config ] \
+#	&& mysql='--with-mysql=/usr --with-mysqli=/usr/bin/mysql_config --with-pdo-mysql=/usr'
 
 export CFLAGS=" -O9 -pipe "
 export CPPFLAGS=" -O9 -pipe "
@@ -64,12 +64,15 @@ $mysql \
 --with-gd --with-jpeg-dir=/usr/lib --with-png-dir=/usr/lib \
 --enable-gd-native-ttf --with-freetype-dir=/usr/lib \
 --with-iconv --with-openssl --enable-sockets --with-curl --with-xsl --with-bz2 \
-> jw.configure.output
+--enable-fpm \
+--enable-zip \
+--enable-soap \
+ > jw.configure.output
 
 echo
 echo "Compiling"
 
-if ! make > jw.make.output
+if ! make  # > jw.make.output
 then
 	echo "make failed" 1>&2
 	exit 1
@@ -135,15 +138,16 @@ sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request2
 sudo $INSTALL_BASE/php/bin/pear install -al Image_Graph
 sudo $INSTALL_BASE/php/bin/pear install -al Mail
 sudo $INSTALL_BASE/php/bin/pear install -al Mail_Mime
-sudo $INSTALL_BASE/php/bin/pear install -al Text_Diff
+#sudo $INSTALL_BASE/php/bin/pear install -al Text_Diff
 sudo $INSTALL_BASE/php/bin/pear install -al Console_Color
 sudo $INSTALL_BASE/php/bin/pear channel-discover pear.phpunit.de
 sudo $INSTALL_BASE/php/bin/pear channel-discover pear.symfony-project.com
 sudo $INSTALL_BASE/php/bin/pear channel-discover components.ez.no
 sudo $INSTALL_BASE/php/bin/pear install -al phpunit/PHPUnit
-sudo $INSTALL_BASE/php/bin/pear channel-discover pear.horde.org
-sudo $INSTALL_BASE/php/bin/pear install -al horde/horde_text_diff
+#sudo $INSTALL_BASE/php/bin/pear channel-discover pear.horde.org
+#sudo $INSTALL_BASE/php/bin/pear install -al horde/horde_text_diff
 
+[ -e /home/www/configs/php.ini ] && sudo ln -s /home/www/configs/php.ini /usr/local/php/lib/php.ini
 
 echo
 echo "Install complete"
