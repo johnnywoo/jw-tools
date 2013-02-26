@@ -11,7 +11,7 @@ cd "$SOURCE_FOLDER"
 wget --no-verbose http://git-core.googlecode.com/files/git-$GIT_VERSION.tar.gz
 tar xzf git-$GIT_VERSION.tar.gz
 cd git-$GIT_VERSION
-./configure --prefix=$INSTALL_BASE/git-$GIT_VERSION
+./configure --prefix=$INSTALL_BASE/git-$GIT_VERSION --without-tcltk
 make
 sudo make install
 cd ..
