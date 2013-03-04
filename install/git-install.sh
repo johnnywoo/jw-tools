@@ -14,6 +14,7 @@ cd git-$GIT_VERSION
 ./configure --prefix=$INSTALL_BASE/git-$GIT_VERSION --without-tcltk
 make
 sudo make install
+sudo make install-doc
 cd ..
 
 [ -e "$INSTALL_BASE/git" ] && rm "$INSTALL_BASE/git"
