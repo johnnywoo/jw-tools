@@ -37,9 +37,9 @@ Committing:
           (-n is no rename without committing).
 Branches:
   b       Switch to a branch, creates it if necessary.
-  bm      Switch to master branch.
-  g [-n]  Create a local branch from the remote one, then rebase
-          (-n is to skip the rebase part).
+  bm      Switch to master branch. Also ulls the branch from origin too.
+  g [-r]  Create a local branch from the remote one
+          (-r is to rebase the branch to master).
           Will overwrite local branch completely.
 Manipulation:
   rd      Deletes a remote branch.
@@ -334,14 +334,15 @@ case "$cmd" in
 		wait_for_git_lock
 		git rebase --abort >/dev/null 2>/dev/null || true
 		git checkout master
+		$SELF u
 		;;
 	g|grab)
 		wait_for_git_lock
 		git remote update > /dev/null
-		norebase=""
-		if [ "$1" = "-n" ]
+		norebase="yes"
+		if [ "$1" = "-r" ]
 		then
-			norebase="yes"
+			norebase=""
 			shift 1
 		fi
 		branch=$(guess_remote_branch "$1")
