@@ -15,6 +15,7 @@ Usage: gh command [args]
 Information:
   s       git status
   so      git remote show origin
+  o       git remote update
   l       List of all branches. Auto-updates remote list.
   i       Show changes in current branch since master.
   dl      Show diff for last commit in the branch.
@@ -207,6 +208,10 @@ case "$cmd" in
 	so)
 		wait_for_git_lock
 		git remote show origin
+		;;
+	o)
+		wait_for_git_lock
+		git remote update
 		;;
 	l)
 		wait_for_git_lock
