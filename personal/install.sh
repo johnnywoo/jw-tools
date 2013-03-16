@@ -33,7 +33,7 @@ echo -ne "Installing profile... "
 profile_fname=$(ls -1 "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.profile" 2>/dev/null | head -n 1)
 [ -z "$profile_fname" ] && profile_fname="$HOME/.profile" && touch "$profile_fname"
 
-if grep "$fld" "$profile_fname" >/dev/null 2>&1
+if grep "$fld" "$profile_fname" &>/dev/null
 then
 	echo "already installed"
 else
