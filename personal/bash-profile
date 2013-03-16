@@ -25,7 +25,7 @@ export EDITOR="nano"
 
 # ls colors are set to a minimal scheme with no backgrounds;
 # file=white dir=blue exec=yellow link=cyan weird=red
-if ls --file-type / >/dev/null 2>&1
+if ls --file-type / &>/dev/null
 then
 	# CentOS
 	export LS_COLORS='no=00:fi=00:di=34:ln=36:pi=31:so=31:do=31:bd=31:cd=31:or=31:su=00:sg=00:tw=34:ow=34:st=34:ex=33:mi=31:'
@@ -37,7 +37,6 @@ else
 fi
 
 alias ..="cd .."
-alias ...="cd ../.."
 
 alias g="grep -i"
 
