@@ -3,24 +3,20 @@
 ## PATH
 #
 
-PATH=/usr/local/bin:$PATH
-PATH=/usr/local/apache2/bin:$PATH
-PATH=/usr/local/php/bin:$PATH
-PATH=/usr/local/mysql/bin:$PATH
-PATH=/usr/local/subversion/bin:$PATH
-PATH=/usr/local/git/bin:$PATH
+PATH="/usr/local/bin:$PATH"
+[ -e /usr/local/apache2/bin ]    && PATH="/usr/local/apache2/bin:$PATH"
+[ -e /usr/local/php/bin ]        && PATH="/usr/local/php/bin:$PATH"
+[ -e /usr/local/mysql/bin ]      && PATH="/usr/local/mysql/bin:$PATH"
+[ -e /usr/local/subversion/bin ] && PATH="/usr/local/subversion/bin:$PATH"
+[ -e /usr/local/git/bin ]        && PATH="/usr/local/git/bin:$PATH"
 PATH="$(dirname "$JW_PERSONAL_DIR")/bin:$PATH"
 export PATH
 
-export LC_CTYPE=ru_RU.UTF-8
-
 export MANPATH="/usr/local/man:$MANPATH"
 
-# crontab -e rules
-export EDITOR="nano"
 
 ###
-## ALIAS
+## ALIASES
 #
 
 # ls colors are set to a minimal scheme with no backgrounds;
@@ -47,13 +43,10 @@ else
 	alias iim="sudo /etc/init.d/mysqld"
 fi
 
+# git shortcuts
 alias s="gh s"
 alias d="git diff"
 alias l="git log --graph"
-
-alias dutop='du -ms * | sort -nr | head'
-
-alias t='top -d1 -M'
 
 # forces sudo to use correct path (of current user)
 alias sudo='sudo env PATH=$PATH'
@@ -61,11 +54,27 @@ alias sudo='sudo env PATH=$PATH'
 # makes less work with colored outputs e.g. of phpunit
 alias less='less -R'
 
+# misc
+alias dutop='du -ms * | sort -nr | head'
+alias t='top -d1 -M'
+
+
 ###
-## PS1
+## COMPLETION
 #
 
 source "$JW_PERSONAL_DIR/git-completion.sh"
+
+source "$JW_PERSONAL_DIR/symfony-completion.sh"
+complete -F _symfony_console ac
+
+# magically enabling completion for aliases
+source "$JW_PERSONAL_DIR/alias-completion.sh"
+
+
+###
+## PS1
+#
 
 # available colors: red green blue yellow cyan pink gray white
 [ -z "$PS1_COLOR" ] && PS1_COLOR="white"
@@ -85,6 +94,10 @@ unset c red h PS1_COLOR JW_PERSONAL_DIR
 ###
 ## MISC
 #
+
+export LC_CTYPE=ru_RU.UTF-8
+
+export EDITOR="nano"
 
 HISTFILESIZE=100000000
 HISTSIZE=10000
