@@ -32,8 +32,9 @@ Committing:
   a       git add
   m       git commit
   am      Commit all local changes.
-  p       Push current branch to origin.
-  fp      Push current branch to origin (with --force).
+  p [-p]  Push current branch to origin. Use -p to also request a pull on github.
+  fp [-p] Push current branch to origin (with --force).
+  pr      Opens a pull request creation page in github.
   mr [-n] Rename migrations from timestamps to ordered numbers
           (-n is no rename without committing).
 Branches:
@@ -153,6 +154,15 @@ wait_for_git_lock() {
 			rm -f "$lockf"
 		done
 		echo
+	fi
+}
+
+github_pull_request() {
+	branch="$(current_branch)"
+	repo="$(git remote -v | grep -m 1 "(push)" | sed -e "s/.*github.com[:/]\(.*\)\.git.*/\1/")"
+	if [ "$branch" ] && [ "$repo" ]; then
+		echo "Opening a pull request github page for $repo"
+		open "https://github.com/$repo/pull/new/$branch"
 	fi
 }
 
@@ -301,12 +311,18 @@ case "$cmd" in
 		wait_for_git_lock
 		branch=$(current_branch)
 		git push origin "$branch"
+		[ "x-p" = "x$1" ] && github_pull_request
 		;;
 	fp)
 		wait_for_git_lock
 		branch=$(current_branch)
 		$JW_CONFIRM_CMD "Do you really want to force push? Can't be good, you know." || exit 1
 		git push --force origin "$branch"
+		[ "x-p" = "x$1" ] && github_pull_request
+		;;
+	pr)
+		wait_for_git_lock
+		github_pull_request
 		;;
 	ok)
 		wait_for_git_lock
