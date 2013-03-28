@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# if an url is given, we open it on the desktop
+
+if [ "x$1" != "x" ] && [[ "$1" == http://* || "$1" == https://* ]]; then
+	ssh desktop "open $@"
+	exit $?
+fi
+
+/usr/bin/open "$@"
+
