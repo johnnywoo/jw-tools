@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ -f /usr/bin/edit ]; then
+	# we have the local edit
+	edit "$@"
+	exit $?
+fi
+
+[ -z "$1" ] && exit 1
+
+file=$1
+shift
+
+abs_file="$(readlink -f $file)"
+
+if [[ "$abs_file" != $HOME/* ]]; then
+	sudo nano "$file" "$@"
+	exit $?
+fi
+
+remote_file="${abs_file/$HOME//Volumes/vps}"
+
+ssh desktop "open -a \"Sublime Text 2\" $remote_file $@"
