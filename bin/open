@@ -2,6 +2,11 @@
 
 # if an url is given, we open it on the desktop
 
+# try local open first, it might work (then we are on the desktop)
+/usr/bin/open "$@" &>/dev/null && exit 0
+
+# local open failed, we are on the remote
+
 if [ "x$1" != "x" ] && [[ "$1" == http://* || "$1" == https://* ]]; then
 	ssh desktop "open $@"
 	exit $?
