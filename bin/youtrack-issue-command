@@ -1,0 +1,58 @@
+#!/bin/bash
+
+if [ ! -f "$HOME/.jw-youtrack" ]; then 
+    echo "No ~/.jw-youtrack found" >&2
+    echo "It should have url=http://youtrack, login=vasya and password=xxx lines" >&2
+    exit 1
+fi
+
+source "$HOME/.jw-youtrack"
+
+if [ -z "$2" ]; then
+    echo "Usage: $0 IS-123 Fixed" >&2
+    exit 1
+fi
+
+issue="$1"
+state="$2"
+
+file="$(mktemp)"
+trap "rm $file" EXIT
+
+urlencode() {
+    perl -MURI::Escape -e 'print uri_escape($ARGV[0]);' "$1"
+}
+
+# login
+
+resp="$( \
+    curl --silent --request POST \
+        --cookie-jar "$file" \
+        --header "Content-Type: application/x-www-form-urlencoded" \
+        --data "login=$(urlencode "$login")&password=$(urlencode "$password")" \
+        "$url/rest/user/login" \
+)"
+if ! echo "$resp" | grep -q "<login>ok</login>"; then
+    echo "Cannot login to YouTrack" >&2
+    echo "$resp" >&2
+    exit 1
+fi
+
+# command
+
+post="command=$(urlencode "$state")"
+[ "$3" ] && post="$post&comment=$(urlencode "$3")"
+
+resp="$( \
+    curl --silent --request POST \
+        --cookie "$file" --cookie-jar "$file" \
+        --header "Content-Type: application/x-www-form-urlencoded" \
+        --data "$post" \
+        "$url/rest/issue/$issue/execute" \
+)"
+if echo "$resp" | grep -q "<error"; then
+    echo "Cannot change issue state" >&2
+    echo "YouTrack says:" >&2
+    echo "$resp" | sed -e 's/<[^>]*>//g' >&2
+    exit 1
+fi
