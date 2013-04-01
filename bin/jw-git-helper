@@ -318,6 +318,8 @@ case "$cmd" in
 		needcreate=""
 		git branch --no-color | grep "$1" >/dev/null || needcreate="-b"
 		git checkout $needcreate "$1"
+		issue="$(youtrack_issue_id)"
+		[ -z "$needcreate" -a "$issue" ] || youtrack-issue-command "$issue" "In Progress"
 		;;
 	bm)
 		wait_for_git_lock
