@@ -164,6 +164,18 @@ github_pull_request() {
 		echo "Opening a pull request github page for $repo"
 		open "https://github.com/$repo/pull/new/$branch"
 	fi
+
+	issue="$(youtrack_issue_id)"
+	if [ "$issue" ]; then
+		echo "Setting YouTrack issue $issue to Fixed"
+		youtrack-issue-command "$issue" Fixed
+	fi
+}
+
+youtrack_issue_id() { # ticket
+	ticket="$1"
+	[ -z "$ticket" ] && ticket="$(current_ticket)"
+	[ "$ticket" ] && echo "IS-$ticket"
 }
 
 require_trac() {
