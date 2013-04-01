@@ -38,7 +38,7 @@ Committing:
           (-n is no rename without committing).
 Branches:
   b       Switch to a branch, creates it if necessary.
-  bm      Switch to master branch. Also pulls the branch from origin too.
+  bm      Switch to master branch. Also pulls the branch from origin.
   g [-r]  Create a local branch from the remote one
           (-r is to rebase the branch to master).
           Will overwrite local branch completely.
@@ -47,12 +47,6 @@ Manipulation:
   accept  Merge current branch into master, push master,
           then remove the branch from both servers.
           If a branch is specified, it will be grabbed before accepting.
-  accept-all
-          Accept all currently validated branches.
-Trac:
-  t       Show ticket info.
-  te      Edit ticket description.
-  fix     Close ticket (fixed).
 EOF
 }
 
@@ -75,12 +69,10 @@ guess_remote_branch() { # [branch name | ticket number]
 	# no branch given: take current branch
 	[ -z "$1" ] && current_branch && return
 	# ticket number: try to find a branch for it
-	if [[ "$1" =~ ^[0-9]+$ ]]
-	then
+	if [[ "$1" =~ ^[0-9]+$ ]]; then
 		bs=$(git branch -r --no-color 2>/dev/null | sed -e 's/^ *origin\///' | grep -e '^[^ ]\+$' | grep "_${1}_")
 		n=$(echo "$bs" | wc -l)
-		if [ $n = "1" ]
-		then
+		if [ $n = "1" ]; then
 			echo "$bs"
 			return
 		fi
@@ -92,12 +84,6 @@ guess_remote_branch() { # [branch name | ticket number]
 # cuts first numeric sequence from the input
 guess_ticket() { # ticket id or branch name
 	echo "$1" | egrep -o '[0-9]+' | head -n 1
-}
-
-guess_author() { # [branch name]
-	branch="$1"
-	[ -z "$branch" ] && branch=$(current_branch)
-	echo "$branch" | cut -d _ -f 1
 }
 
 # Takes input and converts it into ticket id.
@@ -113,18 +99,11 @@ current_ticket() { # [ticket id or branch name]
 
 current_project_root() {
 	x=$(pwd)
-	while [ "$x" != "/" ]
-	do
+	while [ "$x" != "/" ]; do
 		[ -d "$x/.git" ] && echo "$x" && return
 		x=$(dirname "$x")
 	done
 	crap "Not in a git repository"
-}
-
-mark_branch_date() { # [ticket id]
-	ticket="$1"
-	[ -z "$ticket" ] && ticket=$(current_ticket 2>/dev/null)
-	[ "$ticket" ] && wget -qO- "http://agalkin:ldflt,bkf@manager.trac.vps.loc/?action=touch_branch_date&id=$ticket" | tee /dev/stderr | grep -vq error	
 }
 
 find_migrations_path() {
@@ -133,8 +112,7 @@ find_migrations_path() {
 }
 
 propose_push() { # branch name
-	if [ "$1" ] && $JW_CONFIRM_CMD -n "Do you want to push $1 to origin?"
-	then
+	if [ "$1" ] && $JW_CONFIRM_CMD -n "Do you want to push $1 to origin?"; then
 		git push origin "$1"
 	fi
 }
@@ -142,11 +120,9 @@ propose_push() { # branch name
 wait_for_git_lock() {
 	pth="$(current_project_root)"
 	lockf="$pth/.git/index.lock"
-	if [ -e "$lockf" ]
-	then
+	if [ -e "$lockf" ]; then
 		echo -ne "Waiting for other process to release git lock.."
-		while [ -e "$lockf" ]
-		do
+		while [ -e "$lockf" ]; do
 			echo -ne "."
 			sleep 1
 			# not waiting for too long
@@ -175,15 +151,6 @@ youtrack_issue_id() { # ticket
 	ticket="$1"
 	[ -z "$ticket" ] && ticket="$(current_ticket)"
 	[ "$ticket" ] && echo "IS-$ticket"
-}
-
-require_trac() {
-	[ "$JW_TRAC_CMD" ] || crap "No trac command specified, see jw-settings"
-}
-
-assign_ticket() { # ticket author
-	echo "About to save ticket $1"
-	echo " " | $JW_TRAC_CMD save "$1" owner:$2
 }
 
 display_status() { # status name regexp color
@@ -265,13 +232,11 @@ case "$cmd" in
 	a)
 		wait_for_git_lock
 
-		if [ "$(current_branch)" = "master" ]
-		then
+		if [ "$(current_branch)" = "master" ]; then
 			$SELF migrename -n
 		fi
 
-		if [ $# = 0 ]
-		then
+		if [ $# = 0 ]; then
  			git add -Av .
  		else
 			git add -Av "$@"
@@ -280,8 +245,7 @@ case "$cmd" in
 		;;
 	m)
 		wait_for_git_lock
-		if [ "$1" ]
-		then
+		if [ "$1" ]; then
  			git commit -m "$1"
  		else
  			git commit -e
@@ -292,8 +256,7 @@ case "$cmd" in
 		wait_for_git_lock
 		do_the_adding="yes"
 		# --quiet removes output and also turns on correct exit codes
-		if git diff --staged --quiet
-		then
+		if git diff --staged --quiet; then
 			true
 		else
 			git status
@@ -305,8 +268,7 @@ case "$cmd" in
 		;;
 	r)
 		wait_for_git_lock
-		if [ $# = 0 ]
-		then
+		if [ $# = 0 ]; then
 			git checkout -- .
 			git clean -f .
 		else
@@ -356,7 +318,6 @@ case "$cmd" in
 		needcreate=""
 		git branch --no-color | grep "$1" >/dev/null || needcreate="-b"
 		git checkout $needcreate "$1"
-		[ -z "$needcreate" ] || mark_branch_date
 		;;
 	bm)
 		wait_for_git_lock
@@ -368,8 +329,7 @@ case "$cmd" in
 		wait_for_git_lock
 		git remote update > /dev/null
 		norebase="yes"
-		if [ "$1" = "-r" ]
-		then
+		if [ "$1" = "-r" ]; then
 			norebase=""
 			shift 1
 		fi
@@ -385,8 +345,7 @@ case "$cmd" in
 		echo
 		echo "== Checking out $branch"
 		git checkout -b "$branch" "origin/$branch"
-		if [ -z "$norebase" ]
-		then
+		if [ -z "$norebase" ]; then
 			echo
 			echo "== Rebasing to master"
 			git rebase master
@@ -399,8 +358,7 @@ case "$cmd" in
 		[ "$mp" ] || exit 0
 
 		nocommit=""
-		if [ "$1" = "-n" ]
-		then
+		if [ "$1" = "-n" ]; then
 			nocommit="yes"
 		fi
 
@@ -408,16 +366,13 @@ case "$cmd" in
 		set +e # prevent empty grep from killing our script
 		list="$(ls "$mp" | grep -E '^[0-9]{5}')"
 		set -e
-		if [ "$list" ]
-		then
-			if [ -z "$nocommit" ]
-			then
+		if [ "$list" ]; then
+			if [ -z "$nocommit" ]; then
 				# checking for dirty index/untracked files
 				[ "$(git status --porcelain 2>/dev/null)" ] && crap "Cannot rename migrations: there are uncommitted changes"
 			fi
 
-			echo "$list" | while read fname
-			do
+			echo "$list" | while read fname; do
 				# finding maximum number in files
 				set +e
 				last_prefix=$(ls "$mp" | grep -oE '^[0-9]{4}_' | sort -r | head -n1 | grep -oE '[0-9]+')
@@ -432,8 +387,7 @@ case "$cmd" in
 				echo "Renaming $fname to $newfname"
 				mv "$mp/$fname" "$mp/$newfname"
 			done
-			if [ -z "$nocommit" ]
-			then
+			if [ -z "$nocommit" ]; then
 				git add -Av .
 				git commit -m "Renaming migrations from timestamps to number prefixes (see #847 for details)"
 			fi
@@ -447,18 +401,6 @@ case "$cmd" in
 		git branch -r | grep "origin/$branch" >/dev/null || crap "No branch $branch in origin"
 		git push origin :$branch
 		;;
-	accept-all)
-		for ticket in $($JW_TRAC_CMD list-validated); do
-			echo
-			echo
-			echo "Trying to accept ticket $ticket"
-			echo
-			if $SELF grab $ticket; then
-				# merging the branch into master, closing the ticket
-				yes | $SELF accept
-			fi
-		done
-		;;
 	ac|accept)
 		[ "$1" ] && $SELF grab "$1"
 		wait_for_git_lock
@@ -468,9 +410,9 @@ case "$cmd" in
 		[ "$branch" == "master" ] && crap
 		$JW_CONFIRM_CMD "Do you wish to merge this branch into master and then delete the branch?" || exit 0
 		echo
-		echo "== Renaming migrations"
-		$SELF migrename
-		echo
+		# echo "== Renaming migrations"
+		# $SELF migrename
+		# echo
 		echo "== Switching to master"
 		git checkout master
 		echo
@@ -482,64 +424,21 @@ case "$cmd" in
 		echo
 		echo "== Removing local branch $branch"
 		git branch -D "$branch"
-		if git branch -r | grep "origin/$branch" >/dev/null
-		then
+		if git branch -r | grep "origin/$branch" >/dev/null; then
 			echo
 			echo "== Removing remote branch $branch"
 			git push origin :$branch
 		fi
-		ticket=$(guess_ticket "$branch")
-		if [ "$ticket" ] && [ "$JW_TRAC_CMD" ]
-		then
-			ticket_info=$($JW_TRAC_CMD view "$ticket" | head -n 2)
-			if echo "$ticket_info" | head -n 1 | grep -v closed >/dev/null
-			then
-				echo
-				echo "== Trac ticket"
-				echo "$ticket_info"
-				$JW_CONFIRM_CMD "Do you want to close this ticket now?" && echo " " | $JW_TRAC_CMD save "$ticket" status:closed resolution:fixed
-			fi
+
+		ticket="$(guess_ticket)"
+		[ "$ticket" ] && issue="$(youtrack_issue_id $ticket)" || issue=""
+		if [ "$issue" ]; then
+			echo
+			echo "== Setting YouTrack issue $issue to Verified"
+			youtrack-issue-command "$issue" Verified
 		fi
 		;;
 
-	t)
-		require_trac
-		ticket=$(current_ticket "$1")
-		$JW_TRAC_CMD view "$ticket"
-		;;
-	te)
-		require_trac
-		ticket=$(current_ticket "$1")
-		tmpf=$(mktemp)
-		tmpf2=$(mktemp)
-		$JW_TRAC_CMD get "$ticket" > $tmpf
-		cp $tmpf $tmpf2
-		# counting lines to put cursor at the last one in editor
-		lines=$(cat $tmpf | wc -l)
-		nano -ti +$lines $tmpf
-		if diff $tmpf $tmpf2 >/dev/null
-		then
-			echo "No changes"
-		else
-			cat $tmpf | $JW_TRAC_CMD save "$ticket"
-
-			branch=$( [ "$1" ] && echo "$1" || current_branch )
-			if [ "$branch" ]
-			then
-				# touching branch code review
-				echo
-				$JW_CONFIRM_CMD "Do you want to mark review complete for $branch?" \
- 					&& $SELF rw "$ticket"
-			fi
-		fi
-		rm $tmpf $tmpf2
-		;;
-	fix)
-		require_trac
-		ticket=$(current_ticket "$1")
-		echo "Closing ticket $ticket"
-		echo " " | $JW_TRAC_CMD save "$ticket" status:closed resolution:fixed
-		;;
 	*)
 		echo "Unrecognized command: $cmd" >&2
 		$JW_CONFIRM_CMD "Do you want to run that with git?" || exit 1
