@@ -14,7 +14,6 @@ cat << EOF
 Usage: gh command [args]
 Information:
   s       git status
-  so      git remote show origin
   o       git remote update
   l       List of all branches. Auto-updates remote list.
   i       Show changes in current branch since master.
@@ -226,10 +225,6 @@ case "$cmd" in
 		display_status "$status" 'Staged:'     '^[A-Z]'  32 # green
 		display_status "$status" 'Not staged:' '^.[A-Z]' 31 # red
 		display_status "$status" 'Untracked:'  '^\?'     31 # red
-		;;
-	so)
-		wait_for_git_lock
-		git remote show origin
 		;;
 	o)
 		wait_for_git_lock
