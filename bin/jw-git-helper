@@ -38,7 +38,7 @@ Committing:
           (-n is no rename without committing).
 Branches:
   b       Switch to a branch, creates it if necessary.
-  bm      Switch to master branch. Also ulls the branch from origin too.
+  bm      Switch to master branch. Also pulls the branch from origin too.
   g [-r]  Create a local branch from the remote one
           (-r is to rebase the branch to master).
           Will overwrite local branch completely.
