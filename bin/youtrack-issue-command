@@ -1,15 +1,19 @@
 #!/bin/bash
 
-if [ ! -f "$HOME/.jw-youtrack" ]; then 
-    echo "No ~/.jw-youtrack found" >&2
-    echo "It should have url=http://youtrack, login=vasya and password=xxx lines" >&2
-    exit 1
+if [ ! "$url" -o ! "$login" -o ! "$password" ]; then
+    if [ ! -f "$HOME/.jw-youtrack" ]; then
+        echo "No ~/.jw-youtrack found" >&2
+        echo "It should have url=http://youtrack, login=vasya and password=xxx lines" >&2
+        echo "Alternatively, you may call $0 like this:" >&2
+        echo "url='http://youtrack' login='vasya' password='xxx' $0 $@" >&2
+        exit 1
+    fi
+
+    source "$HOME/.jw-youtrack"
 fi
 
-source "$HOME/.jw-youtrack"
-
 if [ -z "$2" ]; then
-    echo "Usage: $0 IS-123 Fixed" >&2
+    echo "Usage: $0 IS-123 Fixed [comment]" >&2
     exit 1
 fi
 
@@ -20,7 +24,7 @@ file="$(mktemp)"
 trap "rm $file" EXIT
 
 urlencode() {
-    perl -MURI::Escape -e 'print uri_escape($ARGV[0]);' "$1"
+    LC_ALL=C perl -MURI::Escape -e 'print uri_escape($ARGV[0]);' "$1"
 }
 
 # login
@@ -48,7 +52,7 @@ resp="$( \
         --cookie "$file" --cookie-jar "$file" \
         --header "Content-Type: application/x-www-form-urlencoded" \
         --data "$post" \
-        "$url/rest/issue/$issue/execute" \
+        "$url/rest/issue/$(urlencode "$issue")/execute" \
 )"
 if echo "$resp" | grep -q "<error"; then
     echo "Cannot change issue state" >&2
