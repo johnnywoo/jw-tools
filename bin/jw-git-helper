@@ -31,11 +31,11 @@ Committing:
   a       git add
   m       git commit
   am      Commit all local changes.
-  p [-p]  Push current branch to origin. Use -p to also request a pull on github.
-  fp [-p] Push current branch to origin (with --force).
+  p [-r]  Push current branch to origin. Use -p to also request a pull on github.
+  fp [-r] Push current branch to origin (with --force).
   pr      Opens a pull request creation page in github.
   mr [-n] Rename migrations from timestamps to ordered numbers
-          (-n is no rename without committing).
+          (-n is to rename without committing).
 Branches:
   b       Switch to a branch, creates it if necessary.
   bm      Switch to master branch. Also pulls the branch from origin.
@@ -280,14 +280,18 @@ case "$cmd" in
 		wait_for_git_lock
 		branch=$(current_branch)
 		git push origin "$branch"
-		[ "x-p" = "x$1" ] && github_pull_request
+		if [ "x-r" = "x$1" ]; then
+			github_pull_request
+		fi
 		;;
 	fp)
 		wait_for_git_lock
 		branch=$(current_branch)
 		$JW_CONFIRM_CMD "Do you really want to force push? Can't be good, you know." || exit 1
 		git push --force origin "$branch"
-		[ "x-p" = "x$1" ] && github_pull_request
+		if [ "x-r" = "x$1" ]; then
+			github_pull_request
+		fi
 		;;
 	pr)
 		wait_for_git_lock
@@ -300,7 +304,7 @@ case "$cmd" in
 		;;
 	u)
 		wait_for_git_lock
-		git pull
+		git pull --rebase
 		git submodule update --recursive --init
 		;;
 	ss)
