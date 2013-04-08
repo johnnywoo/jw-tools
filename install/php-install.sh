@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.4.12"
+PHP_VERSION="5.4.13"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 APACHE_FOLDER="/usr/local/apache2"
@@ -49,8 +49,15 @@ apxs_arg="--with-apxs2=$APACHE_FOLDER/bin/apxs"
 [ -z "$APACHE_FOLDER" ] && apxs_arg=""
 
 mysql="--with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd"
+echo "Installing MySQL as mysqlnd"
 # [ -e /usr/bin/mysql_config ] \
 #	&& mysql='--with-mysql=/usr --with-mysqli=/usr/bin/mysql_config --with-pdo-mysql=/usr'
+
+pgsql=""
+if [ -f /usr/bin/pg_config ]; then
+	echo "Found $(/usr/bin/pg_config --version), let's have that too"
+	pgsql=" --with-pgsql=/usr/bin --with-pdo-pgsql=/usr/bin"
+fi
 
 export CFLAGS=" -O9 -pipe "
 export CPPFLAGS=" -O9 -pipe "
@@ -60,6 +67,7 @@ export CXXFLAGS=" -O9 -pipe "
 $apxs_arg \
 --with-zlib-dir=/usr/lib \
 $mysql \
+$pgsql \
 --enable-mbstring --enable-mbstring=all \
 --with-gd --with-jpeg-dir=/usr/lib --with-png-dir=/usr/lib \
 --enable-gd-native-ttf --with-freetype-dir=/usr/lib \
