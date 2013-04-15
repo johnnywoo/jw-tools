@@ -196,10 +196,12 @@ case "$cmd" in
 	o)
 		wait_for_git_lock
 		git remote update
+		git remote prune origin
 		;;
 	l)
 		wait_for_git_lock
 		git remote update >/dev/null
+		git remote prune origin
 		git branch -a
 		;;
 	i)
@@ -323,7 +325,10 @@ case "$cmd" in
 		git branch --no-color | grep "$1" >/dev/null || needcreate="-b"
 		git checkout $needcreate "$1"
 		issue="$(youtrack_issue_id)"
-		[ -z "$needcreate" -a "$issue" ] || youtrack-issue-command "$issue" "In Progress"
+		if [ ! -z "$needcreate" -a "$issue" ]; then
+			echo "Setting YouTrack issue $issue to In Progress"
+			youtrack-issue-command "$issue" "In Progress"
+		fi
 		;;
 	bm)
 		wait_for_git_lock
