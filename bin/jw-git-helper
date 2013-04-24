@@ -239,8 +239,8 @@ case "$cmd" in
 		fi
 
 		if [ $# = 0 ]; then
- 			git add -Av .
- 		else
+			git add -Av .
+		else
 			git add -Av "$@"
 		fi
 		$SELF s
@@ -248,10 +248,15 @@ case "$cmd" in
 	m)
 		wait_for_git_lock
 		if [ "$1" ]; then
- 			git commit -m "$1"
- 		else
- 			git commit -e
- 		fi
+			git commit -m "$1"
+		else
+			issue="$(youtrack_issue_id)"
+			if [ "$issue" ]; then
+				git commit -m "$(youtrack-issue-summary "$issue")" -e
+			else
+				git commit -e
+			fi
+		fi
 		propose_push $(current_branch)
 		;;
 	am)
@@ -321,9 +326,13 @@ case "$cmd" in
 	b)
 		wait_for_git_lock
 		[ -z "$1" ] && crap "You must specify the branch"
+		branch="$1"
 		needcreate=""
-		git branch --no-color | grep "$1" >/dev/null || needcreate="-b"
-		git checkout $needcreate "$1"
+		git branch --no-color | grep "$branch" >/dev/null || needcreate="-b"
+		if [ ! -z "$needcreate" ] && [[ $branch != agalkin_* ]]; then
+			branch="agalkin_$branch"
+		fi
+		git checkout $needcreate "$branch"
 		issue="$(youtrack_issue_id)"
 		if [ ! -z "$needcreate" -a "$issue" ]; then
 			echo "Setting YouTrack issue $issue to In Progress"
