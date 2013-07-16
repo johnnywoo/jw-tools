@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.4.13"
+PHP_VERSION="5.5.0"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 APACHE_FOLDER="/usr/local/apache2"
@@ -34,7 +34,7 @@ echo "Removing previous sources of $PHP_VERSION, if any"
 rm -rf "$SOURCE_FOLDER/php-$PHP_VERSION"
 
 echo "Removing previous installation of $PHP_VERSION, if any"
-rm -rf "~/.pearrc.5.3" "~/.pearrc.5.4"
+rm -rf "~/.pearrc.5.3" "~/.pearrc.5.4" "~/.pearrc.5.5"
 sudo rm -rf "/usr/local/php-$PHP_VERSION"
 [ "$APACHE_FOLDER" ] && sudo rm -rf "$APACHE_FOLDER/modules/libphp5-$PHP_VERSION.so"
 
