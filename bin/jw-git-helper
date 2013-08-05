@@ -329,10 +329,8 @@ case "$cmd" in
 		branch="$1"
 		needcreate=""
 		git branch --no-color | grep "$branch" >/dev/null || needcreate="-b"
-		if [ ! -z "$needcreate" ] && [[ $branch != agalkin_* ]]; then
-			branch="agalkin_$branch"
-		fi
 		git checkout $needcreate "$branch"
+		git submodule update
 		issue="$(youtrack_issue_id)"
 		if [ ! -z "$needcreate" -a "$issue" ]; then
 			echo "Setting YouTrack issue $issue to In Progress"
