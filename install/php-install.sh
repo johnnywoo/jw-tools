@@ -57,6 +57,8 @@ pgsql=""
 if [ -f /usr/bin/pg_config ]; then
 	echo "Found $(/usr/bin/pg_config --version), let's have that too"
 	pgsql=" --with-pgsql=/usr/bin --with-pdo-pgsql=/usr/bin"
+else
+	echo "pgSQL not found, driver will not be installed"
 fi
 
 export CFLAGS=" -O9 -pipe "
