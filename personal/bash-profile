@@ -35,6 +35,7 @@ fi
 alias ..="cd .."
 
 alias g="grep -i"
+alias n=nano
 
 alias iih="sudo /etc/init.d/httpd"
 if [ -e /etc/init.d/mysql ]; then
