@@ -1,4 +1,4 @@
-#!/bin/env php
+#!/usr/bin/env php
 <?
 
 $errors = array(
@@ -19,12 +19,15 @@ $errors = array(
 	E_DEPRECATED        => 'E_DEPRECATED',
 );
 
-if(!isset($argv[1]) || !is_numeric($argv[1]))
-	die("Do you mind giving me an error level, love?\n");
+if (!isset($argv[1]) || !is_numeric($argv[1])) {
+	$level = error_reporting();
+} else {
+	$level = (int) $argv[1];
+}
+$orig_level = $level;
 
 
 echo "Your level is:\n";
-$level = (int) $argv[1];
 foreach($errors as $bit => $name)
 {
 	if($level & $bit)
@@ -37,7 +40,7 @@ if($level != 0)
 
 
 echo "\nYour level does not have:\n";
-$level = (int) $argv[1];
+$level = $orig_level;
 $all = 0;
 foreach($errors as $bit => $name)
 {
