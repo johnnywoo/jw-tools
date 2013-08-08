@@ -28,35 +28,34 @@ $orig_level = $level;
 
 
 echo "Your level is:\n";
-foreach($errors as $bit => $name)
-{
-	if($level & $bit)
+foreach ($errors as $bit => $name) {
+	if ($level & $bit) {
 		echo "$name\n";
+	}
 	$level = $level & ~$bit;
 }
 
-if($level != 0)
+if ($level != 0) {
 	echo "Unknown bits: " . decbin($level) . "\n";
+}
 
 
 echo "\nYour level does not have:\n";
 $level = $orig_level;
 $all = 0;
-foreach($errors as $bit => $name)
-{
+foreach ($errors as $bit => $name) {
 	$all |= $bit;
 }
 $level = $all & ~$level;
 
-foreach($errors as $bit => $name)
-{
-	if($level & $bit)
+foreach ($errors as $bit => $name) {
+	if ($level & $bit) {
 		echo "$name\n";
+	}
 	$level &= ~$bit;
 }
 
-if($level != 0)
-{
+if ($level != 0) {
 	echo "Unknown bits: " . decbin($level) . "\n";
 	echo "E_ALL:        " . decbin(E_ALL) . "\n";
 }
