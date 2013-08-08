@@ -1,4 +1,3 @@
-
 ###
 ## PATH
 #
@@ -9,6 +8,7 @@ PATH="/usr/local/bin:$PATH"
 [ -e /usr/local/mysql/bin ]      && PATH="/usr/local/mysql/bin:$PATH"
 [ -e /usr/local/subversion/bin ] && PATH="/usr/local/subversion/bin:$PATH"
 [ -e /usr/local/git/bin ]        && PATH="/usr/local/git/bin:$PATH"
+[ -e /usr/local/node/bin ]       && PATH="/usr/local/node/bin:$PATH"
 PATH="$(dirname "$JW_PERSONAL_DIR")/bin:$PATH"
 export PATH
 
@@ -34,23 +34,13 @@ fi
 
 alias ..="cd .."
 
-alias g="grep -i"
-alias n=nano
-
-alias iih="sudo /etc/init.d/httpd"
-if [ -e /etc/init.d/mysql ]; then
-	alias iim="sudo /etc/init.d/mysql"
-else
-	alias iim="sudo /etc/init.d/mysqld"
-fi
-
 # git shortcuts
 alias s="gh s"
 alias d="git diff"
 alias l="git log --graph"
 
 # forces sudo to use correct path (of current user)
-alias sudo='sudo env PATH=$PATH'
+alias sudo='sudo env PATH="$PATH"'
 
 # makes less work with colored outputs e.g. of phpunit
 alias less='less -R'
@@ -68,9 +58,6 @@ source "$JW_PERSONAL_DIR/git-completion.sh"
 
 source "$JW_PERSONAL_DIR/symfony-completion.sh"
 complete -F _symfony_console ac
-
-# magically enabling completion for aliases
-source "$JW_PERSONAL_DIR/alias-completion.sh"
 
 
 ###
