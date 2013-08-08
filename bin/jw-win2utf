@@ -1,2 +1,6 @@
 #!/bin/bash
+
+# this is useful for git repos with cp1251 content in them
+# because then you need a converter program for git config
+
 cat "$1" | iconv -f cp1251

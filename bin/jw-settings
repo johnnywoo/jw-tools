@@ -8,15 +8,9 @@ JW_SETTINGS_FILE="$HOME/.jw-settings"
 ## settings (copy this part of the file into ~/.jw-settings)
 #
 
-# you probably want this to be "ssh user@trac-server .../trac-cli/trac"
-# if empty, the trac functionality in gh and other scripts would be disabled
-JW_TRAC_CMD=""
-
 JW_CONFIRM_CMD="jw-confirm"
 
-JW_COLORPICKER_CMD="jw-colorpicker"
-
-JW_REVIEWABLE_PROJECTS=""
+JW_MIGRATIONS_PATH=""
 
 #
 ## end
@@ -24,16 +18,14 @@ JW_REVIEWABLE_PROJECTS=""
 
 
 
-if [ "$(basename $0)" = "jw-settings" ]
-then
-# we're not sourced, the script was executed directly
-cat << EOF
+if [ "$(basename $0)" = "jw-settings" ]; then
+	# we're not sourced, the script was executed directly
+	cat << EOF
 Settings file: $JW_SETTINGS_FILE
 You can see the list of settings inside this script.
 EOF
 fi
 
-if [ -e "$JW_SETTINGS_FILE" ]
-then
+if [ -e "$JW_SETTINGS_FILE" ]; then
 	source "$JW_SETTINGS_FILE"
 fi

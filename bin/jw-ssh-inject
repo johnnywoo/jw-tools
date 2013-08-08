@@ -1,6 +1,6 @@
 #!/bin/bash
 
-key=$(cat ~/.ssh/id_rsa.pub)
+key="$(cat ~/.ssh/id_rsa.pub)"
 
 [ -z "$1" ] && echo "usage: $(basename "$0") user@host" && exit
 
