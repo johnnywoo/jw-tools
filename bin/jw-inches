@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ -z "$1" -o "x$1" = "x--help" -o "x$1" = "x-h" ]; then
+	echo 'Converts inches into SI units'
+	echo "Usage: $(basename "$0") <length_in_inches> ..."
+	exit
+fi
+
+for x in "$@"; do
+	cm="$(units "$x inches" cm | head -1 | cut -f2 -d' ')"
+	if [[ "$cm" < 1 ]]; then
+		mm="$( echo "$cm * 10" | bc )"
+		echo "$x"'" is '"$mm mm"
+	else
+		echo "$x"'" is '"$cm cm"
+	fi
+done
