@@ -1,0 +1,25 @@
+#!/usr/local/php/bin/php
+<?php
+
+//
+// Outputs phpunit's JSON log as a TSV table (time spent in ms and test name)
+// useful for detection of slow tests
+//
+
+// $ phpunit --log-json=x
+// $ cat x | jw-phpunit-json-table | sort -nr | head
+// 122	Grace\Bundle\Tests\ServicesTest::testServices
+// ...
+
+$data = file_get_contents('php://stdin');
+$data = "[" . str_replace('}{', '},{', $data) . "]";
+
+
+$json = json_decode($data, true);
+
+foreach ($json as $row) {
+	if (empty($row['time'])) {
+		continue;
+	}
+	echo intval($row['time'] * 1000) . "\t" . $row['test'] . "\n";
+}
