@@ -57,6 +57,9 @@ pgsql=""
 if [ -f /usr/bin/pg_config ]; then
 	echo "Found $(/usr/bin/pg_config --version), let's have that too"
 	pgsql=" --with-pgsql=/usr/bin --with-pdo-pgsql=/usr/bin"
+elif [ -f /usr/pgsql-9.2/bin/pg_config ]; then
+	echo "Found $(/usr/pgsql-9.2/bin/pg_config --version), let's have that too"
+	pgsql=" --with-pgsql=/usr/pgsql-9.2/bin --with-pdo-pgsql=/usr/pgsql-9.2/bin"
 else
 	echo "pgSQL not found, driver will not be installed"
 fi
