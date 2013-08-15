@@ -93,7 +93,6 @@ current_ticket() { # [ticket id or branch name]
 	str="$1"
 	[ -z "$str" ] && str=$(current_branch)
 	ticket=$(guess_ticket "$str")
-	[ -z "$ticket" ] && crap "Need ticket number"
 	echo "$ticket"
 }
 
@@ -151,6 +150,8 @@ youtrack_issue_id() { # ticket
 	ticket="$1"
 	[ -z "$ticket" ] && ticket="$(current_ticket)"
 	[ "$ticket" ] && echo "IS-$ticket"
+	# if we didn't find the ticket, it's not an error, so let's return 0
+	return 0
 }
 
 display_status() { # status name regexp color
