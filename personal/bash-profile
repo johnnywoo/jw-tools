@@ -40,7 +40,7 @@ alias d="git diff"
 alias l="git log --graph"
 
 # forces sudo to use correct path (of current user)
-alias sudo='sudo env PATH="$PATH"'
+#alias sudo='sudo env PATH="$PATH"'
 
 # makes less work with colored outputs e.g. of phpunit
 alias less='less -R'
