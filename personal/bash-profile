@@ -54,7 +54,8 @@ alias t='top -d1 -M'
 ## COMPLETION
 #
 
-source "$JW_PERSONAL_DIR/git-completion.sh"
+source "$JW_PERSONAL_DIR/git-prompt.sh"
+source "$JW_PERSONAL_DIR/git-completion.bash"
 
 source "$JW_PERSONAL_DIR/symfony-completion.sh"
 complete -F _symfony_console ac
