@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# $ pu whatever last-arg
+# becomes
+# $ phpunit --filter=last-arg whatever
+
+lastArg="${@:$#:1}"
+
+if [ -z "$1" -o "${lastArg:0:1}" = '-' ]; then
+    phpunit --colors "$@"
+else
+    length=$(($#-1))
+    phpunit --colors --filter="$lastArg" "${@:1:$length}"
+fi
