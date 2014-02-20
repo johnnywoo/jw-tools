@@ -337,6 +337,12 @@ case "$cmd" in
 		;;
 	u)
 		wait_for_git_lock
+
+		branch="$(current_branch)"
+		if ! git config --get "branch.$branch.remote" &>/dev/null ; then
+			git branch --set-upstream-to="origin/$branch" "$branch"
+		fi
+
 		git pull --rebase "$@"
 		git submodule update --recursive --init
 		;;
