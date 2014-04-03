@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.5.1"
+PHP_VERSION="5.5.10"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 APACHE_FOLDER="/usr/local/apache2"
@@ -28,6 +28,10 @@ cd "$SOURCE_FOLDER"
 
 [ -e "php-$PHP_VERSION.tar.bz2" ] \
 	|| wget --no-verbose "http://ru2.php.net/get/php-$PHP_VERSION.tar.bz2/from/this/mirror"
+
+if [ ! -e "php-$PHP_VERSION.tar.bz2" -a -e mirror ]; then
+	mv mirror "php-$PHP_VERSION.tar.bz2"
+fi
 
 # removing prev sources
 echo "Removing previous sources of $PHP_VERSION, if any"
