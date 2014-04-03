@@ -239,20 +239,8 @@ case "$cmd" in
 		display_status "$status" 'Untracked:'  '^\?'     31 # red
 
 		# composer repos
-		if [ -e vendor -a -e composer.json ]; then
-			for file in vendor/*/*/.git; do
-				# if no files were found, $file will contain the glob mask
-				[ -e "$file" ] || break
-				(
-					cd "$file/.."
-					if [[ $(git status --porcelain 2>/dev/null | tail -n1) != "" ]]; then
-						echo -ne "\033[33m" # yellow
-						echo -n "Dirty Composer package: "
-						dirname "${file#vendor/}"
-						echo -ne "\033[0m" # white
-					fi
-				)
-			done
+		if [ -e composer.json ]; then
+			composer status -v
 		fi
 		;;
 	o)
