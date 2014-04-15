@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.5.10"
+PHP_VERSION="5.5.11"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 APACHE_FOLDER="/usr/local/apache2"
@@ -64,6 +64,9 @@ if [ -f /usr/bin/pg_config ]; then
 elif [ -f /usr/pgsql-9.2/bin/pg_config ]; then
 	echo "Found $(/usr/pgsql-9.2/bin/pg_config --version), let's have that too"
 	pgsql=" --with-pgsql=/usr/pgsql-9.2/bin --with-pdo-pgsql=/usr/pgsql-9.2/bin"
+elif [ -f /usr/pgsql-9.3/bin/pg_config ]; then
+	echo "Found $(/usr/pgsql-9.3/bin/pg_config --version), let's have that too"
+	pgsql=" --with-pgsql=/usr/pgsql-9.3/bin --with-pdo-pgsql=/usr/pgsql-9.3/bin"
 else
 	echo "pgSQL not found, driver will not be installed"
 fi
@@ -120,11 +123,15 @@ fi
 cd ..
 
 # copying php.ini
-n=$(ls -1 "$INSTALL_BASE/php/lib/php.ini" 2>/dev/null | wc -l)
-if [ "$n" != "0" ]
-then
+if [ -e "$INSTALL_BASE/php/lib/php.ini" ]; then
 	echo "Copying php.ini from current installation"
 	sudo cp -P "$INSTALL_BASE/php/lib/php.ini" "$INSTALL_BASE/php-$PHP_VERSION/lib"
+fi
+
+# copying php-fpm.conf
+if [ -e "$INSTALL_BASE/php/etc/php-fpm.conf" ]; then
+	echo "Copying php-fpm.conf from current installation"
+	sudo cp -P "$INSTALL_BASE/php/etc/php-fpm.conf" "$INSTALL_BASE/php-$PHP_VERSION/etc"
 fi
 
 [ -e "$INSTALL_BASE/php" ] && sudo rm "$INSTALL_BASE/php"
@@ -136,13 +143,17 @@ sudo $INSTALL_BASE/php/bin/pear clear-cache >/dev/null 2>&1 || true
 sudo $INSTALL_BASE/php/bin/pear upgrade-all
 
 
-echo
-echo "Installing APC"
-sudo $INSTALL_BASE/php/bin/pecl install apc
+#echo
+#echo "Installing APC"
+#sudo $INSTALL_BASE/php/bin/pecl install apc
 
 echo
 echo "Installing XDebug"
 sudo $INSTALL_BASE/php/bin/pecl install xdebug > xdebug.install.output
+
+echo
+echo "Installing memcached"
+sudo $INSTALL_BASE/php/bin/pecl install memcached > memcached.install.output
 
 
 echo
