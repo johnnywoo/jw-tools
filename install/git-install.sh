@@ -1,16 +1,16 @@
 #!/bin/bash
 set -e
 
-GIT_VERSION="1.9.0"
+GIT_VERSION="1.9.2"
 INSTALL_BASE="/usr/local" # will make base/git-v.v.v.v folder and link base/git to it
 SOURCE_FOLDER="$HOME/sources"
 
 [ -e "$SOURCE_FOLDER" ] || mkdir "$SOURCE_FOLDER"
 cd "$SOURCE_FOLDER"
 
-wget --no-verbose http://git-core.googlecode.com/files/git-$GIT_VERSION.tar.gz
-tar xzf git-$GIT_VERSION.tar.gz
-cd git-$GIT_VERSION
+wget --no-verbose "https://www.kernel.org/pub/software/scm/git/git-$GIT_VERSION.tar.gz"
+tar xzf "git-$GIT_VERSION.tar.gz"
+cd "git-$GIT_VERSION"
 ./configure --prefix=$INSTALL_BASE/git-$GIT_VERSION --without-tcltk
 make
 sudo make install

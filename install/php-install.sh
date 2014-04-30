@@ -1,26 +1,18 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.5.11"
+PHP_VERSION="5.5.12"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
-APACHE_FOLDER="/usr/local/apache2"
 
 [ "$1" ] && PHP_VERSION="$1"
 
 echo "Installing PHP $PHP_VERSION"
 
 # we will need root privs
-if ! sudo whoami >/dev/null 2>&1
-then
-	echo "You need to sudo the script" 1>&2
+if ! sudo whoami &>/dev/null; then
+	echo "You need to sudo the script" >&2
 	exit 1
-fi
-
-if [ ! -d "$APACHE_FOLDER" ]
-then
-	echo "No Apache found, mod_php will not be installed"
-	APACHE_FOLDER=""
 fi
 
 [ -e "$SOURCE_FOLDER" ] || mkdir "$SOURCE_FOLDER"
@@ -40,7 +32,6 @@ rm -rf "$SOURCE_FOLDER/php-$PHP_VERSION"
 echo "Removing previous installation of $PHP_VERSION, if any"
 rm -rf "~/.pearrc.5.3" "~/.pearrc.5.4" "~/.pearrc.5.5"
 sudo rm -rf "/usr/local/php-$PHP_VERSION"
-[ "$APACHE_FOLDER" ] && sudo rm -rf "$APACHE_FOLDER/modules/libphp5-$PHP_VERSION.so"
 
 echo "Unpacking sources distribution"
 tar xjf "php-$PHP_VERSION.tar.bz2"
@@ -48,9 +39,6 @@ cd "php-$PHP_VERSION"
 
 echo
 echo "Configuring"
-
-apxs_arg="--with-apxs2=$APACHE_FOLDER/bin/apxs"
-[ -z "$APACHE_FOLDER" ] && apxs_arg=""
 
 mysql="--with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd"
 echo "Installing MySQL as mysqlnd"
@@ -76,7 +64,6 @@ export CPPFLAGS=" -O9 -pipe "
 export CXXFLAGS=" -O9 -pipe "
 ./configure \
 --prefix=/usr/local/php-$PHP_VERSION \
-$apxs_arg \
 --with-zlib-dir=/usr/lib \
 $mysql \
 $pgsql \
@@ -86,14 +73,12 @@ $pgsql \
 --with-iconv --with-openssl --enable-sockets --with-curl --with-xsl --with-bz2 \
 --enable-fpm \
 --enable-zip \
---enable-soap \
- > jw.configure.output
+--enable-soap
 
 echo
 echo "Compiling"
 
-if ! make  # > jw.make.output
-then
+if ! make; then
 	echo "make failed" 1>&2
 	exit 1
 fi
@@ -101,24 +86,7 @@ fi
 echo
 echo "Installing"
 
-if [ "$APACHE_FOLDER" ]
-then
-	# moving existing apache module file
-	so_file="$APACHE_FOLDER/modules/libphp5.so"
-	# it's a link: remove it
-	[ -h "$so_file" ] && sudo rm "$so_file"
-	# it's not a link: rename it
-	[ -e "$so_file" ] && sudo mv "$so_file" "$APACHE_FOLDER/modules/libphp5-orig.so"
-fi
-
 sudo make install
-
-if [ "$APACHE_FOLDER" ]
-then
-	# install created its own libphp5.so
-	sudo mv "$so_file" "$APACHE_FOLDER/modules/libphp5-$PHP_VERSION.so"
-	sudo ln -s "$APACHE_FOLDER/modules/libphp5-$PHP_VERSION.so" "$so_file"
-fi
 
 cd ..
 
@@ -138,8 +106,7 @@ fi
 sudo ln -s "$INSTALL_BASE/php-$PHP_VERSION" "$INSTALL_BASE/php"
 
 
-export PATH="$PATH:$APACHE_FOLDER/bin"
-sudo $INSTALL_BASE/php/bin/pear clear-cache >/dev/null 2>&1 || true
+sudo $INSTALL_BASE/php/bin/pear clear-cache &>/dev/null || true
 sudo $INSTALL_BASE/php/bin/pear upgrade-all
 
 
@@ -155,27 +122,6 @@ echo
 echo "Installing memcached"
 sudo $INSTALL_BASE/php/bin/pecl install memcached > memcached.install.output
 
-
-echo
-echo "Installing PEAR packages"
-
-sudo $INSTALL_BASE/php/bin/pear config-set preferred_state devel
-sudo $INSTALL_BASE/php/bin/pear config-set auto_discover 1
-sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request
-sudo $INSTALL_BASE/php/bin/pear install -al HTTP_Request2
-sudo $INSTALL_BASE/php/bin/pear install -al Image_Graph
-sudo $INSTALL_BASE/php/bin/pear install -al Mail
-sudo $INSTALL_BASE/php/bin/pear install -al Mail_Mime
-#sudo $INSTALL_BASE/php/bin/pear install -al Text_Diff
-sudo $INSTALL_BASE/php/bin/pear install -al Console_Color
-sudo $INSTALL_BASE/php/bin/pear channel-discover pear.phpunit.de
-sudo $INSTALL_BASE/php/bin/pear channel-discover pear.symfony-project.com
-sudo $INSTALL_BASE/php/bin/pear channel-discover components.ez.no
-sudo $INSTALL_BASE/php/bin/pear install -al phpunit/PHPUnit
-#sudo $INSTALL_BASE/php/bin/pear channel-discover pear.horde.org
-#sudo $INSTALL_BASE/php/bin/pear install -al horde/horde_text_diff
-
-[ -e /home/www/configs/php.ini ] && sudo ln -s /home/www/configs/php.ini /usr/local/php/lib/php.ini
 
 echo
 echo "Install complete"
