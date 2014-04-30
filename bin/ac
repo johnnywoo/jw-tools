@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# a shortcut for symfony console so we can apply completion to it
-
-[ ! -f ./sf ] && echo "Not in a Symfony project root" >&2 && exit 1
-
-./sf "$@"
