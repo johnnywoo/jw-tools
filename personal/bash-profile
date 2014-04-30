@@ -3,12 +3,10 @@
 #
 
 PATH="/usr/local/bin:$PATH"
-[ -e /usr/local/apache2/bin ]    && PATH="/usr/local/apache2/bin:$PATH"
-[ -e /usr/local/php/bin ]        && PATH="/usr/local/php/bin:$PATH"
-[ -e /usr/local/mysql/bin ]      && PATH="/usr/local/mysql/bin:$PATH"
-[ -e /usr/local/subversion/bin ] && PATH="/usr/local/subversion/bin:$PATH"
-[ -e /usr/local/git/bin ]        && PATH="/usr/local/git/bin:$PATH"
-[ -e /usr/local/node/bin ]       && PATH="/usr/local/node/bin:$PATH"
+[ -e /usr/local/php/bin ]   && PATH="/usr/local/php/bin:$PATH"
+[ -e /usr/local/mysql/bin ] && PATH="/usr/local/mysql/bin:$PATH"
+[ -e /usr/local/git/bin ]   && PATH="/usr/local/git/bin:$PATH"
+[ -e /usr/local/node/bin ]  && PATH="/usr/local/node/bin:$PATH"
 PATH="$(dirname "$JW_PERSONAL_DIR")/bin:$PATH"
 export PATH
 
@@ -21,8 +19,7 @@ export MANPATH="/usr/local/man:$MANPATH"
 
 # ls colors are set to a minimal scheme with no backgrounds;
 # file=white dir=blue exec=yellow link=cyan weird=red
-if ls --file-type / &>/dev/null
-then
+if ls --file-type / &>/dev/null; then
 	# CentOS
 	export LS_COLORS='no=00:fi=00:di=34:ln=36:pi=31:so=31:do=31:bd=31:cd=31:or=31:su=00:sg=00:tw=34:ow=34:st=34:ex=33:mi=31:'
 	alias a="ls -AGl --color"
@@ -39,9 +36,6 @@ alias s="gh s"
 alias d="git diff"
 alias l="git log --graph"
 
-# forces sudo to use correct path (of current user)
-#alias sudo='sudo env PATH="$PATH"'
-
 # makes less work with colored outputs e.g. of phpunit
 alias less='less -R'
 
@@ -57,9 +51,6 @@ alias t='top -d1 -M'
 source "$JW_PERSONAL_DIR/git-prompt.sh"
 source "$JW_PERSONAL_DIR/git-completion.bash"
 
-source "$JW_PERSONAL_DIR/symfony-completion.sh"
-complete -F _symfony_console ac
-
 
 ###
 ## PS1
@@ -72,11 +63,10 @@ c=$(jw-colorpicker $PS1_COLOR)
 red=$(jw-colorpicker red)
 
 # we ignore host part for .local hosts
-h=$(hostname | grep -q '.local$' || echo -ne '@\h')
+h=$(hostname | grep -qE '(\.local$|^localhost)' || echo -ne '@\h')
 
 # user@host folder (git)$
-PS1="\$([[ \$? -eq 0 ]] || echo -e \"\[\033[${red}m[exit \$?]\012 \010\")\[\033[${c}m\]\u$h \W\$(__git_ps1 \" (%s)\")\$\[\033[0m\] "
-# the space+\010 is a hack, I can't figure out how to make $() not eat the newline at the end
+PS1="\$([[ \$? -eq 0 ]] || echo -e \"\033[${red}mexit \$? \")\033[${c}m\u$h \W\$(__git_ps1 \" (%s)\")\$\033[0m "
 unset c red h PS1_COLOR JW_PERSONAL_DIR
 
 
@@ -86,7 +76,7 @@ unset c red h PS1_COLOR JW_PERSONAL_DIR
 
 export LC_CTYPE=ru_RU.UTF-8
 
-export EDITOR="nano"
+export EDITOR=nano
 
 HISTFILESIZE=100000000
 HISTSIZE=10000
