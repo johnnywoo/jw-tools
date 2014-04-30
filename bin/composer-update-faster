@@ -1,0 +1,305 @@
+#!/bin/env php
+<?php
+
+// last commits are cached for 15 minutes
+// use $0 -f to force reload
+
+set_exception_handler(function (Exception $e) {
+    fwrite(STDERR, $e->getMessage() . "\n");
+    exit(1);
+});
+
+$requirementsToUpdate = $_SERVER['argv'];
+array_shift($requirementsToUpdate);
+
+
+//
+// ONE PROJECT IN CWD
+//
+
+if (file_exists('./composer.json')) {
+    $project = new Project('.');
+    if ($project->error) {
+        throw new \Exception($project->error);
+    }
+    $cache = array();
+    updatePackage($project, $cache, $requirementsToUpdate, true); // verbose
+    exit;
+}
+
+
+//
+// LIST OF PROJECTS
+//
+
+$projects = array();
+foreach (array_map('dirname', glob(getcwd() . '/*/composer.json')) as $dir) {
+    $project = new Project($dir);
+    if ($project->error) {
+        continue;
+    }
+    $projects[] = $project;
+}
+
+$localUpdates = findLocalUpdates($projects, $requirementsToUpdate);
+if (!empty($localUpdates)) {
+    echo "Found local updates\n";
+    echo "Please write the code for local updates now!\n";
+    var_dump($localUpdates);
+    exit;
+}
+
+echo "No local updates found, will try remote\n";
+$cache = array();
+foreach ($projects as $project) {
+    echo "\n";
+    echo "Updating " . basename($project->dir) . "\n";
+    chdir($project->dir);
+    updatePackage($project, $cache, $requirementsToUpdate, false); // compact
+}
+
+
+//
+// LIB
+//
+
+/**
+ * @param Project[] $projects
+ * @param string[] $requirementsToUpdate
+ * @return array
+ */
+function findLocalUpdates(array $projects, $requirementsToUpdate)
+{
+    $localCommits = array();
+    $lockCommits  = array();
+    foreach ($projects as $project) {
+        $data = $project->getLocalPackageData($requirementsToUpdate);
+        foreach ($data as $package) {
+            $lockCommits[$package['name']][$package['branch']][$package['lockCommit']]   = $package['lockCommit'];
+            $localCommits[$package['name']][$package['branch']][$package['localCommit']] = $package['localCommit'];
+        }
+    }
+
+    $localUpdates = array();
+    foreach ($lockCommits as $name => $branches) {
+        foreach ($branches as $branch => $commits) {
+            if (count($commits) != 1 || count($localCommits[$name][$branch]) != 1 || reset($commits) != reset($localCommits[$name][$branch])) {
+                // there is a divergence between lock files and actual commits
+                // it is more than likely that some package repo was committed into
+                $commitsNotInLock = array_diff($localCommits[$name][$branch], $commits);
+                if (count($commitsNotInLock) == 1) {
+                    // there is one local commit that is not in any lock
+                    // this is what we update to
+                    // otherwise we cannot tell (yet) which one is better, so we need remote anyway
+                    $localUpdates[$name][$branch] = reset($commitsNotInLock);
+                }
+            }
+        }
+    }
+
+    return $localUpdates;
+}
+
+class Project
+{
+    /** @var string */
+    public $dir;
+
+    /** @var array */
+    public $json;
+    /** @var array */
+    public $lock;
+
+    /** @var string */
+    public $error = null;
+
+    public function __construct($dir)
+    {
+        $this->dir = $dir;
+
+        if (!file_exists($dir . '/composer.json')) {
+            $this->error = "Cannot find composer.json in {$dir}";
+        }
+
+        if (!file_exists($dir . '/composer.lock')) {
+            $this->error = "Cannot find composer.lock in {$dir}";
+        }
+
+        if (!$this->error) {
+            $this->json = json_decode(file_get_contents($dir . '/composer.json'), true);
+            $this->lock = json_decode(file_get_contents($dir . '/composer.lock'), true);
+        }
+    }
+
+    private function getVendorDir()
+    {
+        $dir = empty($this->json['config']['vendor-dir']) ? 'vendor' : rtrim($this->json['config']['vendor-dir'], '/');
+        if (substr($dir, 0, 1) != '/') {
+            $dir = $this->dir . '/' . $dir;
+        }
+        return $dir;
+    }
+
+    private function getPackages()
+    {
+        $packages = array();
+        foreach ($this->lock['packages'] as $package) {
+            $packages[$package['name']] = $package;
+        }
+        return $packages;
+    }
+
+    public function getLocalPackageData(array $requirementsToUpdate)
+    {
+        $data     = array();
+        $packages = $this->getPackages();
+        foreach ($this->json['require'] as $name => $version) {
+            if (!empty($requirementsToUpdate)) {
+                if (!in_array($name, $requirementsToUpdate) && !in_array(explode('/', $name . '/')[1], $requirementsToUpdate)) {
+                    continue;
+                }
+            }
+
+            $dir = $this->getVendorDir() . '/' . $name;
+            if (substr($version, 0, 4) === 'dev-' && file_exists($dir . '/.git')) {
+                $branch = substr($version, 4);
+                // vendor/stiffbeards/kola/.git
+
+                if (empty($packages[$name])) {
+                    continue;
+                }
+
+                $package = $packages[$name];
+
+                $data[$name] = array(
+                    'dir'         => $dir,
+                    'name'        => $name,
+                    'branch'      => $branch,
+                    'lockCommit'  => $package['source']['reference'],
+                    'localCommit' => getLastLocalCommit($dir, $branch),
+                );
+            }
+        }
+
+        return $data;
+    }
+
+    private $writeLock = false;
+
+    public function updateLock($name, $commit, $time)
+    {
+        foreach ($this->lock['packages'] as $i => $package) {
+            if ($package['name'] == $name) {
+                $localCommit = $package['source']['reference'];
+                if ($localCommit == $commit) {
+                    return null;
+                }
+
+                $this->writeLock = true;
+                $this->lock['packages'][$i]['source']['reference'] = $commit;
+                $this->lock['packages'][$i]['time']                = $time;
+                if (isset($package['dist'])) {
+                    $this->lock['packages'][$i]['dist']['url']       = 'https://api.github.com/repos/' . $name . '/zipball/' . $commit;
+                    $this->lock['packages'][$i]['dist']['reference'] = $commit;
+                }
+
+                return $localCommit;
+            }
+        }
+        return null;
+    }
+
+    public function writeLock()
+    {
+        if (!$this->writeLock) {
+            return false;
+        }
+        file_put_contents(
+            $this->dir . '/composer.lock',
+            json_encode($this->lock, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n"
+        );
+        return true;
+    }
+}
+
+function updatePackage(Project $project, &$cache, $requirementsToUpdate, $showUpdateGitLog)
+{
+    if (empty($project->json['require'])) {
+        return;
+    }
+
+    $data = $project->getLocalPackageData($requirementsToUpdate);
+    foreach ($data as $package) {
+        $dir    = $package['dir'];
+        $name   = $package['name'];
+        $branch = $package['branch'];
+
+        if (empty($cache[$name][$branch])) {
+            $commit = getLastOriginCommit($dir, $branch);
+
+            $cache[$name][$branch] = array(
+                'commit' => $commit,
+                'time'   => gmdate('Y-m-d H:i:s', getCommitTime($dir, $commit)),
+            );
+        }
+
+        $remoteCommit = $cache[$name][$branch]['commit'];
+        $remoteTime   = $cache[$name][$branch]['time'];
+
+        checkoutCommit($dir, $branch, $remoteCommit);
+        $localCommit = $project->updateLock($name, $remoteCommit, $remoteTime);
+        if ($localCommit === null) {
+            // not updated
+            continue;
+        }
+
+        $localCommitShort  = substr($localCommit, 0, 7);
+        $remoteCommitShort = substr($remoteCommit, 0, 7);
+
+        if ($showUpdateGitLog) {
+            echo "\n";
+        }
+        echo "Updated {$dir}   {$localCommitShort}..{$remoteCommitShort}\n";
+        if ($showUpdateGitLog) {
+            $out = array();
+            exec('cd ' . escapeshellarg($dir) . ' && git log ' . escapeshellarg($localCommit) . '..' . $remoteCommit, $out);
+            echo join("\n", $out) . "\n";
+        }
+    }
+
+    if (!$project->writeLock()) {
+        echo "Nothing to update\n";
+    }
+}
+
+function getLastOriginCommit($dir, $branch)
+{
+    return explode("\t", bash($dir, 'git ls-remote origin ' . escapeshellarg($branch)))[0];
+}
+
+function getLastLocalCommit($dir, $branch)
+{
+    return bash($dir, 'git rev-parse ' . escapeshellarg($branch));
+}
+
+function checkoutCommit($dir, $branch, $commit)
+{
+    $localCommit = getLastLocalCommit($dir, $branch);
+    if ($localCommit != $commit) {
+        bash($dir, 'git pull --rebase origin ' . escapeshellarg($branch));
+    }
+}
+
+function getCommitTime($dir, $commit)
+{
+    return strtotime(bash($dir, 'git log -1 --format=%cd ' . escapeshellarg($commit)));
+}
+
+function bash($dir, $line)
+{
+    exec('cd ' . escapeshellarg($dir) . ' && ' . $line . ' 2>&1', $out, $err);
+    if ($err) {
+        throw new \Exception("Cannot execute {$line} in {$dir}:\n" . join("\n", $out));
+    }
+    return $out[0];
+}
