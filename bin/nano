@@ -1,7 +1,10 @@
 #!/bin/bash
 
+BIN=/usr/bin/nano
+[ ! -e "$BIN" ] && BIN=/bin/nano
+
 if [ "$1" -a ! -w "$1" ]; then
-  sudo /bin/nano "$@"
+  sudo $BIN "$@"
 else
-  /bin/nano "$@"
+  $BIN "$@"
 fi
