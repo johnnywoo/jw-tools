@@ -1,9 +1,6 @@
 #!/bin/env php
 <?php
 
-// last commits are cached for 15 minutes
-// use $0 -f to force reload
-
 set_exception_handler(function (Exception $e) {
     fwrite(STDERR, $e->getMessage() . "\n");
     exit(1);
@@ -22,6 +19,22 @@ if (file_exists('./composer.json')) {
     if ($project->error) {
         throw new \Exception($project->error);
     }
+
+    $localUpdates = findLocalUpdates(array($project), $requirementsToUpdate);
+    if (!empty($localUpdates)) {
+        echo "Found local updates\n";
+        foreach ($localUpdates as $package => $branches) {
+            foreach ($branches as $branch => $remoteCommit) {
+                $time        = getCommitTime($project->getVendorDir() . '/' . $package, $remoteCommit);
+                $localCommit = $project->updateLock($package, $remoteCommit, $time);
+                displayUpdate($project->getVendorDir() . '/' . $package, $localCommit, $remoteCommit, true);
+            }
+        }
+        $project->writeLock();
+        exit;
+    }
+
+    echo "No local updates found, will try remote\n";
     $cache = array();
     updatePackage($project, $cache, $requirementsToUpdate, true); // verbose
     exit;
@@ -131,7 +144,7 @@ class Project
         }
     }
 
-    private function getVendorDir()
+    public function getVendorDir()
     {
         $dir = empty($this->json['config']['vendor-dir']) ? 'vendor' : rtrim($this->json['config']['vendor-dir'], '/');
         if (substr($dir, 0, 1) != '/') {
@@ -253,22 +266,27 @@ function updatePackage(Project $project, &$cache, $requirementsToUpdate, $showUp
             continue;
         }
 
-        $localCommitShort  = substr($localCommit, 0, 7);
-        $remoteCommitShort = substr($remoteCommit, 0, 7);
-
         if ($showUpdateGitLog) {
             echo "\n";
         }
-        echo "Updated {$dir}   {$localCommitShort}..{$remoteCommitShort}\n";
-        if ($showUpdateGitLog) {
-            $out = array();
-            exec('cd ' . escapeshellarg($dir) . ' && git log ' . escapeshellarg($localCommit) . '..' . $remoteCommit, $out);
-            echo join("\n", $out) . "\n";
-        }
+        displayUpdate($dir, $localCommit, $remoteCommit, $showUpdateGitLog);
     }
 
     if (!$project->writeLock()) {
         echo "Nothing to update\n";
+    }
+}
+
+function displayUpdate($dir, $localCommit, $remoteCommit, $showUpdateGitLog)
+{
+    $localCommitShort  = substr($localCommit, 0, 7);
+    $remoteCommitShort = substr($remoteCommit, 0, 7);
+
+    echo "Updated {$dir}   {$localCommitShort}..{$remoteCommitShort}\n";
+    if ($showUpdateGitLog) {
+        $out = array();
+        exec('cd ' . escapeshellarg($dir) . ' && git log ' . escapeshellarg($localCommit) . '..' . $remoteCommit, $out);
+        echo join("\n", $out) . "\n";
     }
 }
 
