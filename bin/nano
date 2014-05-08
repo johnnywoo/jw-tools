@@ -3,7 +3,7 @@
 BIN=/usr/bin/nano
 [ ! -e "$BIN" ] && BIN=/bin/nano
 
-if [ "$1" -a ! -w "$1" ]; then
+if [ "$1" -a -e "$1" -a ! -w "$1" ]; then
   sudo $BIN "$@"
 else
   $BIN "$@"
