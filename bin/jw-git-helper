@@ -3,9 +3,6 @@
 # exit on first error
 set -e
 
-# loading variables with settings
-source jw-settings
-
 SELF="jw-git-helper"
 
 usage()
@@ -45,8 +42,6 @@ Special cases:
 
 Workflow-related:
   pr      Opens a pull request creation page in github.
-  mr [-n] Rename migrations from timestamps to ordered numbers
-          (-n is to rename without committing).
   accept  Merge current branch into master, push master,
           then remove the branch from both servers.
           If a branch is specified, it will be grabbed before accepting.
@@ -94,7 +89,7 @@ current_project_root() {
 }
 
 propose_push() { # branch name
-	if [ "$1" ] && $JW_CONFIRM_CMD -n "Do you want to push $1 to origin?"; then
+	if [ "$1" ] && jw-confirm -n "Do you want to push $1 to origin?"; then
 		git push origin "$1"
 	fi
 }
@@ -184,11 +179,6 @@ current_ticket() { # [ticket id or branch name]
 	[ -z "$str" ] && str=$(current_branch)
 	ticket=$(guess_ticket "$str")
 	echo "$ticket"
-}
-
-find_migrations_path() {
-	x=$(current_project_root)
-	[ -d "$x/$JW_MIGRATIONS_PATH" ] && echo "$x/$JW_MIGRATIONS_PATH" || true # prevent the function from returning 1
 }
 
 
@@ -352,10 +342,6 @@ case "$cmd" in
 	a)
 		wait_for_git_lock
 
-		if [ "$(current_branch)" = "master" ]; then
-			$SELF migrename -n
-		fi
-
 		if [ $# = 0 ]; then
 			git add -Av .
 		else
@@ -386,7 +372,7 @@ case "$cmd" in
 		else
 			$SELF s
 			echo
-			$JW_CONFIRM_CMD -n "Something is already staged, are you sure you want to stage everything else?" || do_the_adding=""
+			jw-confirm -n "Something is already staged, are you sure you want to stage everything else?" || do_the_adding=""
 		fi
 		[ "$do_the_adding" ] && $SELF a
 		$SELF m "$@"
@@ -412,7 +398,7 @@ case "$cmd" in
 	fp)
 		wait_for_git_lock
 		branch=$(current_branch)
-		$JW_CONFIRM_CMD "Do you really want to force push? Can't be good, you know." || exit 1
+		jw-confirm "Do you really want to force push? Can't be good, you know." || exit 1
 		git push --force origin "$branch"
 		if [ "x-r" = "x$1" ]; then
 			github_pull_request
@@ -462,48 +448,6 @@ case "$cmd" in
 		github_pull_request
 		;;
 
-	mr|migrename)
-		mp=$(find_migrations_path)
-		# skip projects without migrations
-		[ "$mp" ] || exit 0
-
-		nocommit=""
-		if [ "$1" = "-n" ]; then
-			nocommit="yes"
-		fi
-
-		# renaming all new migrations to from NNNNNNNNNNNN_x (timestamp) to NNNN_x
-		set +e # prevent empty grep from killing our script
-		list="$(ls "$mp" | grep -E '^[0-9]{5}')"
-		set -e
-		if [ "$list" ]; then
-			if [ -z "$nocommit" ]; then
-				# checking for dirty index/untracked files
-				[ "$(git status --porcelain 2>/dev/null)" ] && crap "Cannot rename migrations: there are uncommitted changes"
-			fi
-
-			echo "$list" | while read fname; do
-				# finding maximum number in files
-				set +e
-				last_prefix=$(ls "$mp" | grep -oE '^[0-9]{4}_' | sort -r | head -n1 | grep -oE '[0-9]+')
-				set -e
-				# removing leading zeros
-				[ "$last_prefix" ] && number=$(echo "$last_prefix" | sed 's/^0\+//')
-				[ -z "$last_prefix" ] && number="0"
-				# making the new filename
-				let number+=1
-				number=$(printf '%04d' "$number")
-				newfname="$number$(echo "$fname" | sed 's/^[0-9]\+//')"
-				echo "Renaming $fname to $newfname"
-				mv "$mp/$fname" "$mp/$newfname"
-			done
-			if [ -z "$nocommit" ]; then
-				git add -Av .
-				git commit -m "Renaming migrations from timestamps to number prefixes (see #847 for details)"
-			fi
-		fi
-		;;
-
 	ac|accept)
 		[ "$1" ] && $SELF grab "$1"
 		wait_for_git_lock
@@ -511,11 +455,8 @@ case "$cmd" in
 		echo
 		echo "== Current branch is $branch"
 		[ "$branch" == "master" ] && crap
-		$JW_CONFIRM_CMD "Do you wish to merge this branch into master and then delete the branch?" || exit 0
+		jw-confirm "Do you wish to merge this branch into master and then delete the branch?" || exit 0
 		echo
-		# echo "== Renaming migrations"
-		# $SELF migrename
-		# echo
 		echo "== Switching to master"
 		git checkout master
 		echo
@@ -544,7 +485,7 @@ case "$cmd" in
 
 	*)
 		echo "Unrecognized command: $cmd" >&2
-		$JW_CONFIRM_CMD "Do you want to run that with git?" || exit 1
+		jw-confirm "Do you want to run that with git?" || exit 1
 		git "$cmd" "$@"
 		;;
 esac

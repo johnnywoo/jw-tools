@@ -310,7 +310,14 @@ function checkoutCommit($dir, $branch, $commit)
 
 function getCommitTime($dir, $commit)
 {
-    return strtotime(bash($dir, 'git log -1 --format=%cd ' . escapeshellarg($commit)));
+    try {
+        $time = bash($dir, 'git log -1 --format=%cd ' . escapeshellarg($commit));
+    } catch(\Exception $e) {
+        bash($dir, 'git remote update');
+        $time = bash($dir, 'git log -1 --format=%cd ' . escapeshellarg($commit));
+    }
+
+    return strtotime($time);
 }
 
 function bash($dir, $line)

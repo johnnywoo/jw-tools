@@ -9,7 +9,7 @@
 # Johnny Woo <agalkin@agalkin.ru>
 
 def="y"
-if [ "$1" = "-n" ]; then
+if [ "x$1" = "x-n" ]; then
 	def="n"
 	shift
 fi
@@ -54,7 +54,7 @@ while true; do
 	[ "$x" = "y" ] && echo "$x" && exit 0
 	[ "$x" = "n" ] && echo "$x" && exit 1
 
-	# the user entered something we didn't account for, 
+	# the user entered something we didn't account for,
 	# but we don't echo it back to him, so let's at least scream
 	[ "$sound_the_alarm" ] && echo -ne "\007"
 
