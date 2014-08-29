@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.5.12"
+PHP_VERSION="5.6.0"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 
@@ -18,12 +18,8 @@ fi
 [ -e "$SOURCE_FOLDER" ] || mkdir "$SOURCE_FOLDER"
 cd "$SOURCE_FOLDER"
 
-[ -e "php-$PHP_VERSION.tar.bz2" ] \
-	|| wget --no-verbose "http://ru2.php.net/get/php-$PHP_VERSION.tar.bz2/from/this/mirror"
-
-if [ ! -e "php-$PHP_VERSION.tar.bz2" -a -e mirror ]; then
-	mv mirror "php-$PHP_VERSION.tar.bz2"
-fi
+[ -e "php-$PHP_VERSION.tar.xz" ] \
+	|| wget --no-verbose -O "php-$PHP_VERSION.tar.xz" "http://ru2.php.net/get/php-$PHP_VERSION.tar.xz/from/this/mirror"
 
 # removing prev sources
 echo "Removing previous sources of $PHP_VERSION, if any"
@@ -34,7 +30,7 @@ rm -rf "~/.pearrc.5.3" "~/.pearrc.5.4" "~/.pearrc.5.5"
 sudo rm -rf "/usr/local/php-$PHP_VERSION"
 
 echo "Unpacking sources distribution"
-tar xjf "php-$PHP_VERSION.tar.bz2"
+tar xf "php-$PHP_VERSION.tar.xz"
 cd "php-$PHP_VERSION"
 
 echo
