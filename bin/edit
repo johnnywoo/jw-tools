@@ -13,11 +13,12 @@ shift
 
 abs_file="$(readlink -f $file)"
 
-if [[ "$abs_file" != $HOME/* ]]; then
+if [[ "$abs_file" != /mnt/desktop-vps-share/* ]]; then
 	sudo nano "$file" "$@"
 	exit $?
 fi
 
-remote_file="${abs_file/$HOME//Volumes/vps}"
+x='/mnt/desktop-vps-share'
+remote_file="${abs_file/$x//Users/johnnywoo/vps-share}"
 
 ssh desktop "open -a \"Sublime Text 2\" $remote_file $@"
