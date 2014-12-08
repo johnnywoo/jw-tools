@@ -2,7 +2,7 @@
 
 if [ -f /usr/bin/edit ]; then
 	# we have the local edit
-	edit "$@"
+	/usr/bin/edit "$@"
 	exit $?
 fi
 
