@@ -30,6 +30,7 @@ Work cycle:
   a       git add
   m       git commit
   am      Commit all local changes.
+  ca      git commit --amend
   r       git checkout --
   p [-r]  Push current branch to origin. Use -p to also request a pull on github.
   fp [-r] Push current branch to origin (with --force).
@@ -376,6 +377,10 @@ case "$cmd" in
 		fi
 		[ "$do_the_adding" ] && $SELF a
 		$SELF m "$@"
+		;;
+	ca)
+		wait_for_git_lock
+		git commit --amend "$@"
 		;;
 	r)
 		wait_for_git_lock
