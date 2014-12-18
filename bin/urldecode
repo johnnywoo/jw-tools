@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+( [ $# -eq 0 ] && cat || echo "$@" ) | while read line; do
+  url_encoded="${line//+/ }"
+  printf '%b' "${url_encoded//%/\x}"
+  echo
+done
