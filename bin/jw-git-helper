@@ -159,6 +159,9 @@ github_pull_request() {
 }
 
 youtrack_issue_id() { # ticket
+	# disabled
+	return 0
+
 	ticket="$1"
 	[ -z "$ticket" ] && ticket="$(current_ticket)"
 	[ "$ticket" ] && echo "IS-$ticket"
