@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.6.5"
+PHP_VERSION="5.6.12"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 
@@ -69,6 +69,7 @@ $pgsql \
 --with-iconv --with-openssl --enable-sockets --with-curl --with-xsl --with-bz2 \
 --enable-fpm \
 --enable-zip \
+--enable-shmop --enable-sysvsem  --enable-sysvshm --enable-sysvmsg \
 --enable-soap
 
 echo
