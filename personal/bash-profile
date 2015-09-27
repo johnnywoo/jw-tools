@@ -84,6 +84,9 @@ HISTSIZE=10000
 # up-down navigation respects already typed symbols
 bind '"\e[A": history-search-backward'
 bind '"\e[B": history-search-forward'
+# ctrl-arrow moves between words
+bind '"\e[1;5C": forward-word'
+bind '"\e[1;5D": backward-word'
 
 # Coloring man output
 # start sequences (printed before special text):
