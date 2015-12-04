@@ -1,0 +1,6 @@
+#!/usr/local/php/bin/php
+<?php
+
+$json = isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1] : file_get_contents('php://stdin');
+echo json_encode(json_decode($json, true), JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE);
+echo "\n";
