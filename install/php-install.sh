@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="5.6.12"
+PHP_VERSION="7.0.0"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 
@@ -36,7 +36,7 @@ cd "php-$PHP_VERSION"
 echo
 echo "Configuring"
 
-mysql="--with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd"
+mysql="--with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd"
 echo "Installing MySQL as mysqlnd"
 # [ -e /usr/bin/mysql_config ] \
 #	&& mysql='--with-mysql=/usr --with-mysqli=/usr/bin/mysql_config --with-pdo-mysql=/usr'
@@ -55,14 +55,13 @@ else
 	echo "pgSQL not found, driver will not be installed"
 fi
 
-export CFLAGS=" -O9 -pipe "
-export CPPFLAGS=" -O9 -pipe "
-export CXXFLAGS=" -O9 -pipe "
+#export CFLAGS=" -O9 -pipe "
+#export CPPFLAGS=" -O9 -pipe "
+#export CXXFLAGS=" -O9 -pipe "
 ./configure \
 --prefix=/usr/local/php-$PHP_VERSION \
 --with-zlib-dir=/usr/lib \
 $mysql \
-$pgsql \
 --enable-mbstring --enable-mbstring=all \
 --with-gd --with-jpeg-dir=/usr/lib --with-png-dir=/usr/lib \
 --enable-gd-native-ttf --with-freetype-dir=/usr/lib \
@@ -103,17 +102,13 @@ fi
 sudo ln -s "$INSTALL_BASE/php-$PHP_VERSION" "$INSTALL_BASE/php"
 
 
-sudo $INSTALL_BASE/php/bin/pear clear-cache &>/dev/null || true
-sudo $INSTALL_BASE/php/bin/pear upgrade-all
+#sudo $INSTALL_BASE/php/bin/pear clear-cache &>/dev/null || true
+#sudo $INSTALL_BASE/php/bin/pear upgrade-all
 
 
 #echo
-#echo "Installing APC"
-#sudo $INSTALL_BASE/php/bin/pecl install apc
-
-echo
-echo "Installing XDebug"
-sudo $INSTALL_BASE/php/bin/pecl install xdebug > xdebug.install.output
+#echo "Installing XDebug"
+#sudo $INSTALL_BASE/php/bin/pecl install xdebug > xdebug.install.output
 
 #echo
 #echo "Installing memcached"
