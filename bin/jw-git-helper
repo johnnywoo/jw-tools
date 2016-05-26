@@ -294,29 +294,16 @@ case "$cmd" in
 	g|grab)
 		wait_for_git_lock
 		git remote update > /dev/null
-		norebase="yes"
-		if [ "$1" = "-r" ]; then
-			norebase=""
-			shift 1
-		fi
 		branch=$(guess_remote_branch "$1")
 		[ "$branch" == 'master' ] && crap "Cannot grab master"
 		[ -z "$branch" ] && crap "You must specify the branch"
 		[ -z "$(git branch -r | grep "origin/$branch")" ] && crap "No branch $branch in origin"
-		# going to master so we can delete current branch
-		git checkout master
 		# try to delete the branch;
 		# error means there was no branch, it should be ignored
 		git branch -D "$branch" 2> /dev/null || true
 		echo
 		echo "== Checking out $branch"
 		git checkout -b "$branch" "origin/$branch"
-		if [ -z "$norebase" ]; then
-			echo
-			echo "== Rebasing to master"
-			git rebase master
-		fi
-		#$SELF sm
 		;;
 	u)
 		wait_for_git_lock
