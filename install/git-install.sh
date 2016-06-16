@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-GIT_VERSION="2.7.0"
+GIT_VERSION="2.9.0"
 INSTALL_BASE="/usr/local" # will make base/git-v.v.v.v folder and link base/git to it
 SOURCE_FOLDER="$HOME/sources"
 
