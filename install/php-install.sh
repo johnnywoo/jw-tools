@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="7.0.3"
+PHP_VERSION="7.0.7"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 
