@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="7.0.7"
+PHP_VERSION="7.0.14"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 
@@ -14,6 +14,10 @@ if ! sudo whoami &>/dev/null; then
   echo "You need to sudo the script" >&2
   exit 1
 fi
+
+
+yum install readline-devel
+
 
 [ -e "$SOURCE_FOLDER" ] || mkdir "$SOURCE_FOLDER"
 cd "$SOURCE_FOLDER"
@@ -36,11 +40,6 @@ cd "php-$PHP_VERSION"
 echo
 echo "Configuring"
 
-mysql="--with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd"
-echo "Installing MySQL as mysqlnd"
-#[ -e /usr/bin/mysql_config ] \
-#  && mysql='--with-mysql=/usr --with-mysqli=/usr/bin/mysql_config --with-pdo-mysql=/usr'
-
 #pgsql=""
 #if [ -f /usr/bin/pg_config ]; then
 #  echo "Found $(/usr/bin/pg_config --version), let's have that too"
@@ -58,15 +57,17 @@ echo "Installing MySQL as mysqlnd"
 ./configure \
 --prefix=/usr/local/php-$PHP_VERSION \
 --with-zlib-dir=/usr/lib \
-$mysql \
+--with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd \
 --enable-mbstring --enable-mbstring=all \
 --with-gd --with-jpeg-dir=/usr/lib --with-png-dir=/usr/lib \
 --enable-gd-native-ttf --with-freetype-dir=/usr/lib \
 --with-iconv --with-openssl --enable-sockets --with-curl --with-xsl --with-bz2 \
 --enable-fpm \
 --enable-zip \
+--with-readline \
 --enable-shmop --enable-sysvsem  --enable-sysvshm --enable-sysvmsg \
---enable-soap
+--enable-soap \
+--enable-opcache-file
 
 echo
 echo "Compiling"
@@ -99,18 +100,9 @@ fi
 sudo ln -s "$INSTALL_BASE/php-$PHP_VERSION" "$INSTALL_BASE/php"
 
 
-#sudo $INSTALL_BASE/php/bin/pear clear-cache &>/dev/null || true
-#sudo $INSTALL_BASE/php/bin/pear upgrade-all
-
-
 echo
 echo "Installing XDebug"
-sudo $INSTALL_BASE/php/bin/pecl install xdebug-2.4.0RC4 > xdebug.install.output
-
-#echo
-#echo "Installing memcached"
-#sudo $INSTALL_BASE/php/bin/pecl install memcached > memcached.install.output
-
+sudo $INSTALL_BASE/php/bin/pecl install xdebug > xdebug.install.output
 
 echo
 echo "Install complete"
