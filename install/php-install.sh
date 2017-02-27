@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PHP_VERSION="7.0.14"
+PHP_VERSION="7.1.2"
 INSTALL_BASE="/usr/local" # will make base/php-v.v.v.v folder and link base/php to it
 SOURCE_FOLDER="$HOME/sources"
 
@@ -16,7 +16,12 @@ if ! sudo whoami &>/dev/null; then
 fi
 
 
-yum install readline-devel
+if which yum >/dev/null; then
+  yum install readline-devel
+else
+  apt-get -y install libreadline-dev libxml2-dev libcurl4-openssl-dev pkg-config libssl-dev libbz2-dev libjpeg-dev libpng12-dev libfreetype6-dev \
+    libxslt1-dev
+fi
 
 
 [ -e "$SOURCE_FOLDER" ] || mkdir "$SOURCE_FOLDER"
