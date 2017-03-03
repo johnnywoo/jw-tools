@@ -11,6 +11,7 @@ status      = auto
 
 [core]
 editor = nano
+preloadindex = true
 
 [diff "cp1251"]
 textconv = jw-win2utf
