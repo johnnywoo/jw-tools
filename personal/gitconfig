@@ -19,3 +19,5 @@ textconv = jw-win2utf
 [format]
 pretty=format:%C(yellow)%h%Creset %s %Cgreen%an %cr%Creset%C(yellow)%d%Creset
 
+[push]
+	default = simple
