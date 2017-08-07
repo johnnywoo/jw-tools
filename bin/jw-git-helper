@@ -32,8 +32,8 @@ Work cycle:
   am      Commit all local changes.
   ca      git commit --amend
   r       git checkout --
-  p [-r]  Push current branch to origin. Use -p to also request a pull on github.
-  fp [-r] Push current branch to origin (with --force).
+  p       Push current branch to origin.
+  fp      Push current branch to origin (with --force-with-lease).
 
 Special cases:
   ok      Add everything and continue rebase.
@@ -386,18 +386,13 @@ case "$cmd" in
 		wait_for_git_lock
 		branch=$(current_branch)
 		git push origin "$branch"
-		if [ "x-r" = "x$1" ]; then
-			github_pull_request
-		fi
+                jw-confirm "Should we make a pull request?" && github_pull_request
 		;;
 	fp)
 		wait_for_git_lock
 		branch=$(current_branch)
 		jw-confirm "Do you really want to force push? Can't be good, you know." || exit 1
-		git push --force origin "$branch"
-		if [ "x-r" = "x$1" ]; then
-			github_pull_request
-		fi
+		git push --force-with-lease origin "$branch"
 		;;
 
 
