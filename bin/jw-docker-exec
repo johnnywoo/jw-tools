@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+search="$1"
+command="${2:-bash}"
+
+if [ -z "$search" ]; then
+    echo "Usage: $0 <search> [<command>]" >&2
+    echo "<search> is a container name or its prefix" >&2
+    echo "Default <command> is bash" >&2
+    echo >&2
+    echo -e "\033[0;33mAvailable containers:\033[0m" >&2
+    docker ps -a --format '{{.Names}}' >&2
+    exit 1
+fi
+
+found=""
+names="$(docker ps -a --format '{{.Names}}' | grep "^$search" || true)"
+
+if [[ $(echo "$names" | grep -ve '^$' | wc -l | awk '{print $1}') = 1 ]]; then
+    set -x
+    exec docker exec -ti "$names" "$command"
+    exit
+fi
+
+if [ -z "$names" ]; then
+    echo "No matches for $search, available containers:" >&2
+    docker ps -a --format '{{.Names}}' >&2
+    exit 1
+fi
+
+echo "Cannot find singular match for $search, available containers:" >&2
+echo "$names" >&2
+exit 1
