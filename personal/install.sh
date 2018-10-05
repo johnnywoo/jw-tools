@@ -35,7 +35,7 @@ if grep "$dir" "$profile_fname" &>/dev/null; then
 	echo "already installed"
 else
 	echo >> "$profile_fname"
-	echo 'PS1_COLOR=gray # red green blue yellow cyan pink gray white' >> "$profile_fname"
+	echo 'PS1_COLOR=yellow # red green blue yellow cyan pink gray white' >> "$profile_fname"
 	echo '# we need this variable, please do not remove it' >> "$profile_fname"
 	echo "JW_PERSONAL_DIR='$dir'" >> "$profile_fname"
 	echo 'source "$JW_PERSONAL_DIR/bash-profile"' >> "$profile_fname"
