@@ -51,6 +51,12 @@ alias t='top -d1 -M'
 source "$JW_PERSONAL_DIR/git-prompt.sh"
 source "$JW_PERSONAL_DIR/git-completion.bash"
 
+if [ -e /usr/share/bash-completion/completions/docker ]; then
+    source /usr/share/bash-completion/completions/docker
+    __dc_completion() { cur="${COMP_WORDS[COMP_CWORD]}"; __docker_complete_containers_running; }
+    complete -F __dc_completion dc
+fi
+
 
 ###
 ## PS1
