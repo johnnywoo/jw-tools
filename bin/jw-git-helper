@@ -61,77 +61,77 @@ EOF
 
 # exits with an error message
 crap() { # error message
-	[ "$1" ] && echo "$1" >&2
-	exit 1
+    [ "$1" ] && echo "$1" >&2
+    exit 1
 }
 
 current_branch() {
-	git branch --no-color 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+    git branch --no-color 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
 
 guess_remote_branch() { # [branch name | ticket number]
-	# no branch given: take current branch
-	[ -z "$1" ] && current_branch && return
-	# ticket number: try to find a branch for it
-	if [[ "$1" =~ ^[0-9]+$ ]]; then
-		bs=$(git branch -r --no-color 2>/dev/null | sed -e 's/^ *origin\///' | grep -e '^[^ ]\+$' | grep "_${1}_")
-		n=$(echo "$bs" | wc -l)
-		if [ $n = "1" ]; then
-			echo "$bs"
-			return
-		fi
-	fi
-	# nothing is found, returning
-	echo "$1"
+    # no branch given: take current branch
+    [ -z "$1" ] && current_branch && return
+    # ticket number: try to find a branch for it
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+        bs=$(git branch -r --no-color 2>/dev/null | sed -e 's/^ *origin\///' | grep -e '^[^ ]\+$' | grep "_${1}_")
+        n=$(echo "$bs" | wc -l)
+        if [ $n = "1" ]; then
+            echo "$bs"
+            return
+        fi
+    fi
+    # nothing is found, returning
+    echo "$1"
 }
 
 current_project_root() {
-	git rev-parse --show-toplevel 2>/dev/null || crap "Not in a git repository"
+    git rev-parse --show-toplevel 2>/dev/null || crap "Not in a git repository"
 }
 
 propose_push() { # branch name
-	if [ "$1" ] && jw-confirm -n "Do you want to push $1 to origin?"; then
-		git push origin "$1"
-	fi
+    if [ "$1" ] && jw-confirm -n "Do you want to push $1 to origin?"; then
+        git push origin "$1"
+    fi
 }
 
 wait_for_git_lock() {
-	pth="$(current_project_root)"
-	lockf="$pth/.git/index.lock"
-	if [ -e "$lockf" ]; then
-		echo "Waiting for other process to release git lock..."
-		sleep 1
-		# not waiting for too long
-		if [ -e "$lockf" ]; then
-			rm "$lockf"
-		fi
-	fi
+    pth="$(current_project_root)"
+    lockf="$pth/.git/index.lock"
+    if [ -e "$lockf" ]; then
+        echo "Waiting for other process to release git lock..."
+        sleep 1
+        # not waiting for too long
+        if [ -e "$lockf" ]; then
+            rm "$lockf"
+        fi
+    fi
 }
 
 display_status() { # status name regexp color
-	x="$(echo "$1" | grep -E "$3" || true)"
-	if [ "$x" ]; then
-		echo "$2"
-		oIFS="$IFS"; IFS=""
-		echo "$x" | while read line; do
-			f1="${line:0:1}"
-			f2="${line:1:1}"
-			rest="${line:2}"
-			[ "$f1" == "?" ] && f1="" && f2="?$f2"
+    x="$(echo "$1" | grep -E "$3" || true)"
+    if [ "$x" ]; then
+        echo "$2"
+        oIFS="$IFS"; IFS=""
+        echo "$x" | while read line; do
+            f1="${line:0:1}"
+            f2="${line:1:1}"
+            rest="${line:2}"
+            [ "$f1" == "?" ] && f1="" && f2="?$f2"
 
-			printf "% 3d. " "$n"
-			echo -ne "\033[32m" # green
-			echo -n "$f1"
-			echo -ne "\033[31m" # red
-			echo -n "$f2"
-			echo -ne "\033[$4m" # given color
-			echo "$rest"
-			echo -ne "\033[0m" # white
+            printf "% 3d. " "$n"
+            echo -ne "\033[32m" # green
+            echo -n "$f1"
+            echo -ne "\033[31m" # red
+            echo -n "$f2"
+            echo -ne "\033[$4m" # given color
+            echo "$rest"
+            echo -ne "\033[0m" # white
 
-			let "n+=1"
-		done
-		IFS="$oIFS"
-	fi
+            let "n+=1"
+        done
+        IFS="$oIFS"
+    fi
 }
 
 
@@ -144,45 +144,45 @@ display_status() { # status name regexp color
    ##    ####  ######  ##    ## ########    ##       ##        #######  ##    ##  ######   ######
 
 github_pull_request() {
-	branch="$(current_branch)"
-	repo="$(git remote -v | grep -m 1 "(push)" | sed -e "s/.*github.com[:/]\(.*\)\.git.*/\1/")"
-	if [ "$branch" ] && [ "$repo" ]; then
-		echo "Opening a pull request github page for $repo"
-		open "https://github.com/$repo/pull/new/$branch"
-	fi
+    branch="$(current_branch)"
+    repo="$(git remote -v | grep -m 1 "(push)" | sed -e "s/.*github.com[:/]\(.*\)\.git.*/\1/")"
+    if [ "$branch" ] && [ "$repo" ]; then
+        echo "Opening a pull request github page for $repo"
+        open "https://github.com/$repo/pull/new/$branch"
+    fi
 
-	issue="$(youtrack_issue_id)"
-	if [ "$issue" ]; then
-		echo "Setting YouTrack issue $issue to Fixed"
-		youtrack-issue-command "$issue" Fixed
-	fi
+    issue="$(youtrack_issue_id)"
+    if [ "$issue" ]; then
+        echo "Setting YouTrack issue $issue to Fixed"
+        youtrack-issue-command "$issue" Fixed
+    fi
 }
 
 youtrack_issue_id() { # ticket
-	# disabled
-	return 0
+    # disabled
+    return 0
 
-	ticket="$1"
-	[ -z "$ticket" ] && ticket="$(current_ticket)"
-	[ "$ticket" ] && echo "IS-$ticket"
-	# if we didn't find the ticket, it's not an error, so let's return 0
-	return 0
+    ticket="$1"
+    [ -z "$ticket" ] && ticket="$(current_ticket)"
+    [ "$ticket" ] && echo "IS-$ticket"
+    # if we didn't find the ticket, it's not an error, so let's return 0
+    return 0
 }
 
 # cuts first numeric sequence from the input
 guess_ticket() { # ticket id or branch name
     # cut is there specially for people with numbers in nicknames
-	echo "$1" | cut -f2- -d_ | egrep -o '[0-9]+' | head -n 1
+    echo "$1" | cut -f2- -d_ | egrep -o '[0-9]+' | head -n 1
 }
 
 # Takes input and converts it into ticket id.
 # Grabs current branch name if no/empty args given.
 # The script will die if no ticket id is found!
 current_ticket() { # [ticket id or branch name]
-	str="$1"
-	[ -z "$str" ] && str=$(current_branch)
-	ticket=$(guess_ticket "$str")
-	echo "$ticket"
+    str="$1"
+    [ -z "$str" ] && str=$(current_branch)
+    ticket=$(guess_ticket "$str")
+    echo "$ticket"
 }
 
 
@@ -204,278 +204,280 @@ shift 1
 
 case "$cmd" in
 
-	#### ##    ## ########  #######
-	 ##  ###   ## ##       ##     ##
-	 ##  ####  ## ##       ##     ##
-	 ##  ## ## ## ######   ##     ##
-	 ##  ##  #### ##       ##     ##
-	 ##  ##   ### ##       ##     ##
-	#### ##    ## ##        #######
+    #### ##    ## ########  #######
+     ##  ###   ## ##       ##     ##
+     ##  ####  ## ##       ##     ##
+     ##  ## ## ## ######   ##     ##
+     ##  ##  #### ##       ##     ##
+     ##  ##   ### ##       ##     ##
+    #### ##    ## ##        #######
 
-	s)
-		pth="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-		if [ -z "$pth" ]; then
-			echo "Not in a git repo!"
-			for f in ./*; do
-				# cannot use -a here because it evaluates all arguments
-				if [ -e "$f/.git" ] && [ "$(cd "$f"; git status --porcelain | wc -l)" != 0 ]; then
-					echo "Dirty repo: $f"
-				fi
-			done
-			exit
-		fi
+    s)
+        pth="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+        if [ -z "$pth" ]; then
+            echo "Not in a git repo!"
+            for f in ./*; do
+                # cannot use -a here because it evaluates all arguments
+                if [ -e "$f/.git" ] && [ "$(cd "$f"; git status --porcelain | wc -l)" != 0 ]; then
+                    echo "Dirty repo: $f"
+                fi
+            done
+            exit
+        fi
 
-		wait_for_git_lock
-		status="$(git status --porcelain)"
-		n=1
-		display_status "$status" 'Staged:'     '^[A-Z]'  32 # green
-		display_status "$status" 'Not staged:' '^.[A-Z]' 31 # red
-		display_status "$status" 'Untracked:'  '^\?'     31 # red
+        wait_for_git_lock
+        status="$(git status --porcelain)"
+        n=1
+        display_status "$status" 'Staged:'     '^[A-Z]'  32 # green
+        display_status "$status" 'Not staged:' '^.[A-Z]' 31 # red
+        display_status "$status" 'Untracked:'  '^\?'     31 # red
 
-		# composer repos
-		if [ -e composer.json -a "$(composer status --no-ansi 2>&1 | grep -v 'getcomposer.org/root')" != 'No local changes' ]; then
-			composer status -v
-		fi
-		;;
-	o)
-		wait_for_git_lock
-		git remote update
-		git remote prune origin
-		;;
-	l)
-		wait_for_git_lock
-		git remote update >/dev/null
-		git remote prune origin
-		git branch -a
-		;;
-	i)
-		wait_for_git_lock
-		git log -M -C --stat --summary --abbrev-commit  master..
-		;;
-	dl)
-		wait_for_git_lock
-		git diff HEAD^..HEAD
-		;;
-	lu)
-		wait_for_git_lock
-		branch="$(current_branch)"
-		git log --graph "$branch@{1}..$branch"
-		;;
-
-
-	########  ########  ######  ######## #### ##     ## #### ##    ##  ######
-	##     ## ##       ##    ## ##        ##  ##     ##  ##  ###   ## ##    ##
-	##     ## ##       ##       ##        ##  ##     ##  ##  ####  ## ##
-	########  ######   ##       ######    ##  ##     ##  ##  ## ## ## ##   ####
-	##   ##   ##       ##       ##        ##   ##   ##   ##  ##  #### ##    ##
-	##    ##  ##       ##    ## ##        ##    ## ##    ##  ##   ### ##    ##
-	##     ## ########  ######  ######## ####    ###    #### ##    ##  ######
-
-	b)
-		wait_for_git_lock
-		[ -z "$1" ] && crap "You must specify the branch"
-		branch="$1"
-		needcreate=""
-		git branch --no-color | grep "$branch" >/dev/null || needcreate="-b"
-		git checkout $needcreate "$branch"
-		git submodule update
-		issue="$(youtrack_issue_id)"
-		if [ ! -z "$needcreate" -a "$issue" ]; then
-			echo "Setting YouTrack issue $issue to In Progress"
-			youtrack-issue-command "$issue" "In Progress"
-		fi
-		;;
-	bm)
-		wait_for_git_lock
-		git rebase --abort &>/dev/null || true
-		git checkout master
-		$SELF u
-		;;
-	g|grab)
-		wait_for_git_lock
-		git remote update > /dev/null
-		branch=$(guess_remote_branch "$1")
-		[ "$branch" == 'master' ] && crap "Cannot grab master"
-		[ -z "$branch" ] && crap "You must specify the branch"
-		[ -z "$(git branch -r | grep "origin/$branch")" ] && crap "No branch $branch in origin"
-		# try to delete the branch;
-		# error means there was no branch, it should be ignored
-		git branch -D "$branch" 2> /dev/null || true
-		echo
-		echo "== Checking out $branch"
-		git checkout -b "$branch" "origin/$branch"
-		;;
-	u)
-		wait_for_git_lock
-
-		branch="$(current_branch)"
-		if ! git config --get "branch.$branch.remote" &>/dev/null ; then
-			git branch --set-upstream-to="origin/$branch" "$branch"
-		fi
-
-		git pull --rebase "$@"
-		git submodule update --recursive --init
-
-		echo
-		echo 'Latest pull summary'
-		git log --graph "$branch@{1}..$branch"
-		;;
+        # composer repos
+        if [ -e composer.json -a "$(composer status --no-ansi 2>&1 | grep -v 'getcomposer.org/root')" != 'No local changes' ]; then
+            composer status -v
+        fi
+        ;;
+    o)
+        wait_for_git_lock
+        git remote update
+        git remote prune origin
+        ;;
+    l)
+        wait_for_git_lock
+        git remote update >/dev/null
+        git remote prune origin
+        git branch -a
+        ;;
+    i)
+        wait_for_git_lock
+        git log -M -C --stat --summary --abbrev-commit  master..
+        ;;
+    dl)
+        wait_for_git_lock
+        git diff HEAD^..HEAD
+        ;;
+    lu)
+        wait_for_git_lock
+        branch="$(current_branch)"
+        git log --graph "$branch@{1}..$branch"
+        ;;
 
 
-	 ######  ##    ##  ######  ##       ########
-	##    ##  ##  ##  ##    ## ##       ##
-	##         ####   ##       ##       ##
-	##          ##    ##       ##       ######
-	##          ##    ##       ##       ##
-	##    ##    ##    ##    ## ##       ##
-	 ######     ##     ######  ######## ########
+    ########  ########  ######  ######## #### ##     ## #### ##    ##  ######
+    ##     ## ##       ##    ## ##        ##  ##     ##  ##  ###   ## ##    ##
+    ##     ## ##       ##       ##        ##  ##     ##  ##  ####  ## ##
+    ########  ######   ##       ######    ##  ##     ##  ##  ## ## ## ##   ####
+    ##   ##   ##       ##       ##        ##   ##   ##   ##  ##  #### ##    ##
+    ##    ##  ##       ##    ## ##        ##    ## ##    ##  ##   ### ##    ##
+    ##     ## ########  ######  ######## ####    ###    #### ##    ##  ######
 
-	a)
-		wait_for_git_lock
+    b)
+        wait_for_git_lock
+        [ -z "$1" ] && crap "You must specify the branch"
+        branch="$1"
+        needcreate=""
+        git branch --no-color | grep "$branch" >/dev/null || needcreate="-b"
+        git checkout $needcreate "$branch"
+        git submodule update
+        issue="$(youtrack_issue_id)"
+        if [ ! -z "$needcreate" -a "$issue" ]; then
+            echo "Setting YouTrack issue $issue to In Progress"
+            youtrack-issue-command "$issue" "In Progress"
+        fi
+        ;;
+    bm)
+        wait_for_git_lock
+        git rebase --abort &>/dev/null || true
+        git checkout master
+        $SELF u
+        ;;
+    g|grab)
+        wait_for_git_lock
+        git remote update > /dev/null
+        branch=$(guess_remote_branch "$1")
+        [ "$branch" == 'master' ] && crap "Cannot grab master"
+        [ -z "$branch" ] && crap "You must specify the branch"
+        [ -z "$(git branch -r | grep "origin/$branch")" ] && crap "No branch $branch in origin"
+        # try to delete the branch;
+        # error means there was no branch, it should be ignored
+        git branch -D "$branch" 2> /dev/null || true
+        echo
+        echo "== Checking out $branch"
+        git checkout -b "$branch" "origin/$branch"
+        ;;
+    u)
+        wait_for_git_lock
 
-		if [ $# = 0 ]; then
-			git add -Av .
-		else
-			git add -Av "$@"
-		fi
-		$SELF s
-		;;
-	m)
-		wait_for_git_lock
-		if [ "$1" ]; then
-			git commit -m "$1"
-		else
-			issue="$(youtrack_issue_id)"
-			if [ "$issue" ]; then
-				git commit -m "$(youtrack-issue-summary "$issue")" -e
-			else
-				git commit -e
-			fi
-		fi
-		propose_push $(current_branch)
-		;;
-	am)
-		wait_for_git_lock
-		do_the_adding="yes"
-		# --quiet removes output and also turns on correct exit codes
-		if git diff --staged --quiet; then
-			true
-		else
-			$SELF s
-			echo
-			jw-confirm -n "Something is already staged, are you sure you want to stage everything else?" || do_the_adding=""
-		fi
-		[ "$do_the_adding" ] && $SELF a
-		$SELF m "$@"
-		;;
-	ca)
-		wait_for_git_lock
-		git commit --amend "$@"
-		;;
-	r)
-		wait_for_git_lock
-		if [ $# = 0 ]; then
-			git checkout -- .
-			git clean -f .
-		else
-			git checkout -- "$@"
-			git clean -f -- "$@"
-		fi
-		;;
-	p)
-		wait_for_git_lock
-		branch=$(current_branch)
-		git push origin "$branch"
-                jw-confirm "Should we make a pull request?" && github_pull_request
-		;;
-	fp)
-		wait_for_git_lock
-		branch=$(current_branch)
-		jw-confirm "Do you really want to force push? Can't be good, you know." || exit 1
-		git push --force-with-lease origin "$branch"
-		;;
+        branch="$(current_branch)"
+        if ! git config --get "branch.$branch.remote" &>/dev/null ; then
+            git branch --set-upstream-to="origin/$branch" "$branch"
+        fi
+
+        git pull --rebase "$@"
+        git submodule update --recursive --init
+
+        echo
+        echo 'Latest pull summary'
+        git log --graph "$branch@{1}..$branch"
+        ;;
 
 
-	########     ###    ########  ########
-	##     ##   ## ##   ##     ## ##
-	##     ##  ##   ##  ##     ## ##
-	########  ##     ## ########  ######
-	##   ##   ######### ##   ##   ##
-	##    ##  ##     ## ##    ##  ##
-	##     ## ##     ## ##     ## ########
+     ######  ##    ##  ######  ##       ########
+    ##    ##  ##  ##  ##    ## ##       ##
+    ##         ####   ##       ##       ##
+    ##          ##    ##       ##       ######
+    ##          ##    ##       ##       ##
+    ##    ##    ##    ##    ## ##       ##
+     ######     ##     ######  ######## ########
 
-	ok)
-		wait_for_git_lock
-		$SELF a
-		git rebase --continue
-		;;
-	ss)
-		wait_for_git_lock
-		git stash
-		;;
-	sp)
-		wait_for_git_lock
-		git stash pop
-		;;
-	rd)
-		wait_for_git_lock
-		branch="$1"
-		[ -z "$branch" ] && branch=$(current_branch)
-		git branch -r | grep "origin/$branch" >/dev/null || crap "No branch $branch in origin"
-		git push origin :$branch
-		;;
+    a)
+        wait_for_git_lock
 
-	######## ####  ######  ##    ## ######## ########  ######
-	   ##     ##  ##    ## ##   ##  ##          ##    ##    ##
-	   ##     ##  ##       ##  ##   ##          ##    ##
-	   ##     ##  ##       #####    ######      ##     ######
-	   ##     ##  ##       ##  ##   ##          ##          ##
-	   ##     ##  ##    ## ##   ##  ##          ##    ##    ##
-	   ##    ####  ######  ##    ## ########    ##     ######
+        if [ $# = 0 ]; then
+            git add -Av .
+        else
+            git add -Av "$@"
+        fi
+        $SELF s
+        ;;
+    m)
+        wait_for_git_lock
+        if [ "$1" ]; then
+            git commit -m "$1"
+        else
+            issue="$(youtrack_issue_id)"
+            if [ "$issue" ]; then
+                git commit -m "$(youtrack-issue-summary "$issue")" -e
+            else
+                git commit -e
+            fi
+        fi
+        propose_push $(current_branch)
+        ;;
+    am)
+        wait_for_git_lock
+        do_the_adding="yes"
+        # --quiet removes output and also turns on correct exit codes
+        if git diff --staged --quiet; then
+            true
+        else
+            $SELF s
+            echo
+            jw-confirm -n "Something is already staged, are you sure you want to stage everything else?" || do_the_adding=""
+        fi
+        [ "$do_the_adding" ] && $SELF a
+        $SELF m "$@"
+        ;;
+    ca)
+        wait_for_git_lock
+        git commit --amend "$@"
+        ;;
+    r)
+        wait_for_git_lock
+        if [ $# = 0 ]; then
+            git checkout -- .
+            git clean -f .
+        else
+            git checkout -- "$@"
+            git clean -f -- "$@"
+        fi
+        ;;
+    p)
+        wait_for_git_lock
+        branch=$(current_branch)
+        git push origin "$branch"
+        if [ "$branch" != master ]; then
+            jw-confirm "Should we make a pull request?" && github_pull_request
+        fi
+        ;;
+    fp)
+        wait_for_git_lock
+        branch=$(current_branch)
+        jw-confirm "Do you really want to force push? Can't be good, you know." || exit 1
+        git push --force-with-lease origin "$branch"
+        ;;
 
-	pr)
-		wait_for_git_lock
-		github_pull_request
-		;;
 
-	ac|accept)
-		[ "$1" ] && $SELF grab "$1"
-		wait_for_git_lock
-		branch=$(current_branch)
-		echo
-		echo "== Current branch is $branch"
-		[ "$branch" == "master" ] && crap
-		jw-confirm "Do you wish to merge this branch into master and then delete the branch?" || exit 0
-		echo
-		echo "== Switching to master"
-		git checkout master
-		echo
-		echo "== Merging $branch into master"
-		git merge --no-ff "$branch"
-		echo
-		echo "== Pushing master"
-		git push origin master
-		echo
-		echo "== Removing local branch $branch"
-		git branch -D "$branch"
-		if git branch -r | grep "origin/$branch" >/dev/null; then
-			echo
-			echo "== Removing remote branch $branch"
-			git push origin :$branch
-		fi
+    ########     ###    ########  ########
+    ##     ##   ## ##   ##     ## ##
+    ##     ##  ##   ##  ##     ## ##
+    ########  ##     ## ########  ######
+    ##   ##   ######### ##   ##   ##
+    ##    ##  ##     ## ##    ##  ##
+    ##     ## ##     ## ##     ## ########
 
-		ticket="$(guess_ticket)"
-		[ "$ticket" ] && issue="$(youtrack_issue_id $ticket)" || issue=""
-		if [ "$issue" ]; then
-			echo
-			echo "== Setting YouTrack issue $issue to Verified"
-			youtrack-issue-command "$issue" Verified
-		fi
-		;;
+    ok)
+        wait_for_git_lock
+        $SELF a
+        git rebase --continue
+        ;;
+    ss)
+        wait_for_git_lock
+        git stash
+        ;;
+    sp)
+        wait_for_git_lock
+        git stash pop
+        ;;
+    rd)
+        wait_for_git_lock
+        branch="$1"
+        [ -z "$branch" ] && branch=$(current_branch)
+        git branch -r | grep "origin/$branch" >/dev/null || crap "No branch $branch in origin"
+        git push origin :$branch
+        ;;
 
-	*)
-		echo "Unrecognized command: $cmd" >&2
-		jw-confirm "Do you want to run that with git?" || exit 1
-		git "$cmd" "$@"
-		;;
+    ######## ####  ######  ##    ## ######## ########  ######
+       ##     ##  ##    ## ##   ##  ##          ##    ##    ##
+       ##     ##  ##       ##  ##   ##          ##    ##
+       ##     ##  ##       #####    ######      ##     ######
+       ##     ##  ##       ##  ##   ##          ##          ##
+       ##     ##  ##    ## ##   ##  ##          ##    ##    ##
+       ##    ####  ######  ##    ## ########    ##     ######
+
+    pr)
+        wait_for_git_lock
+        github_pull_request
+        ;;
+
+    ac|accept)
+        [ "$1" ] && $SELF grab "$1"
+        wait_for_git_lock
+        branch=$(current_branch)
+        echo
+        echo "== Current branch is $branch"
+        [ "$branch" == "master" ] && crap
+        jw-confirm "Do you wish to merge this branch into master and then delete the branch?" || exit 0
+        echo
+        echo "== Switching to master"
+        git checkout master
+        echo
+        echo "== Merging $branch into master"
+        git merge --no-ff "$branch"
+        echo
+        echo "== Pushing master"
+        git push origin master
+        echo
+        echo "== Removing local branch $branch"
+        git branch -D "$branch"
+        if git branch -r | grep "origin/$branch" >/dev/null; then
+            echo
+            echo "== Removing remote branch $branch"
+            git push origin :$branch
+        fi
+
+        ticket="$(guess_ticket)"
+        [ "$ticket" ] && issue="$(youtrack_issue_id $ticket)" || issue=""
+        if [ "$issue" ]; then
+            echo
+            echo "== Setting YouTrack issue $issue to Verified"
+            youtrack-issue-command "$issue" Verified
+        fi
+        ;;
+
+    *)
+        echo "Unrecognized command: $cmd" >&2
+        jw-confirm "Do you want to run that with git?" || exit 1
+        git "$cmd" "$@"
+        ;;
 esac
