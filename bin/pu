@@ -6,9 +6,17 @@
 
 lastArg="${@:$#:1}"
 
+run-phpunit() {
+    if [ -e ./vendor/bin/phpunit ]; then
+        ./vendor/bin/phpunit "$@"
+    else
+        phpunit "$@"
+    fi
+}
+
 if [ -z "$1" -o "${lastArg:0:1}" = '-' ]; then
-    phpunit --colors "$@"
+    run-phpunit --colors "$@"
 else
     length=$(($#-1))
-    phpunit --colors --filter="$lastArg" "${@:1:$length}"
+    run-phpunit --colors --filter="$lastArg" "${@:1:$length}"
 fi
