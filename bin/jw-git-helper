@@ -233,8 +233,8 @@ case "$cmd" in
         display_status "$status" 'Untracked:'  '^\?'     31 # red
 
         # composer repos
-        if [ -e composer.json -a "$(composer status --no-ansi 2>&1 | grep -v 'getcomposer.org/root')" != 'No local changes' ]; then
-            composer status -v
+        if [ -e composer.json -a "$(composer status --no-interaction --no-ansi 2>&1 | grep -v 'getcomposer.org/root')" != 'No local changes' ]; then
+            composer status -v --no-interaction
         fi
         ;;
     o)
