@@ -376,10 +376,10 @@ case "$cmd" in
         wait_for_git_lock
         if [ $# = 0 ]; then
             git checkout -- .
-            git clean -f .
+            git clean -fd .
         else
             git checkout -- "$@"
-            git clean -f -- "$@"
+            git clean -fd -- "$@"
         fi
         ;;
     p)
