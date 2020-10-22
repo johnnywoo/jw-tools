@@ -1,0 +1,45 @@
+#!/bin/bash
+set -e
+
+command="$1"
+host="${2:-127.0.0.1}"
+port="${3:-11300}"
+
+main() {
+    if [ "x$command" = "x" ]; then
+        tubes="$( cmd list-tubes | grep '^-' | grep -v '^---$' | cut -c 3- )"
+        echo "$tubes" \
+            | while read tube; do cmd "stats-tube $tube"; done \
+            | php -r '
+                $stats = [];
+                $index = 0;
+                foreach (explode("\n", file_get_contents("php://stdin")) as $line) {
+                    if ($line === "---") {
+                        $index++;
+                    }
+                    $parts = explode(": ", $line);
+                    if (count($parts) == 2) {
+                        $stats[$parts[0]][$index] = $parts[1];
+                    }
+                }
+                foreach ($stats as $field => $values) {
+                    echo join("\t", [$field, ...$values]) . "\n";
+                }
+            ' \
+            | column -t
+    else
+        cmd "$command"
+    fi
+}
+
+cmd() {
+    php -r '
+        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        socket_connect($socket, "'"$host"'", '"$port"');
+        socket_write($socket, "'"$1"'\r\nquit\r\n");
+        echo socket_read($socket, 1024 * 1024);
+        socket_close($socket);
+    '
+}
+
+main "$@"
